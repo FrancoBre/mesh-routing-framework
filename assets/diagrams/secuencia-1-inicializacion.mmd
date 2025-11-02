@@ -1,0 +1,24 @@
+sequenceDiagram
+    autonumber
+    participant M as Main
+    participant C as SimulationConfig
+    participant N as Network
+    participant S as Simulation
+
+    Note over M: Inicio del programa
+
+    M->>M: parseArgs(args)
+    M->>C: new SimulationConfig(args)
+    C-->>M: config
+
+    Note over M,C: Configuración lista
+
+    M->>N: new Network(config.topology)
+    N-->>M: network
+
+    Note over M,N: Red inicializada según topología
+
+    M->>S: new Simulation(network, config)
+    S-->>M: simulation
+
+    Note over S: Instancia lista para ejecutar

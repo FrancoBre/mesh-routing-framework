@@ -1,0 +1,31 @@
+sequenceDiagram
+    autonumber
+    participant S as Simulation
+    participant N as Node
+    participant A as Application
+    participant P as Packet
+    participant R as Registry
+
+    Note over S: Método run() — flujo principal de simulación
+
+    loop for each AlgorithmType
+        Note over S: Preparar experimento para algoritmo
+
+        loop for each Node in Network
+            S->>N: installApplication(algorithm)
+            N->>A: new Application(algorithm)
+            N-->>S: aplicación instalada
+        end
+
+        S->>P: createPackets(totalPackets)
+        P-->>S: lista de paquetes creados
+
+        loop while !allDelivered()
+            S->>S: tick()
+        end
+
+        S->>R: computeMetrics(algorithm)
+        R-->>S: métricas registradas
+    end
+
+    Note over S: Fin del experimento

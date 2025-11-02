@@ -1,0 +1,18 @@
+package org.ungs.metrics;
+
+import java.util.List;
+import org.ungs.metrics.avgdelivery.AvgDeliveryTimeMetric;
+import org.ungs.util.Tuple;
+
+public final class AvgDeliveryTimePreset implements MetricPreset {
+
+  @Override
+  public MetricType type() {
+    return MetricType.AVG_DELIVERY_TIME;
+  }
+
+  @Override
+  public Metric<List<Tuple<Integer, Double>>> createMetric() {
+    return new AvgDeliveryTimeMetric();
+  }
+}

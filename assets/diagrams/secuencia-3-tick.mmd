@@ -1,0 +1,47 @@
+sequenceDiagram
+    autonumber
+    participant S as Simulation
+    participant Nw as Network
+    participant Nd as Node
+    participant Sc as Scheduler
+    participant R as Registry
+
+    Note over S: Método tick() — un paso de simulación
+
+    S->>S: shouldSendPacket()
+    alt hay nuevos paquetes
+        S->>Nw: sendPacket(Packet)
+        Nw->>Nd: receivePacket(Packet)
+        Nd-->>Nw: encolado en cola
+        S->>R: registerHop(packet)
+    end
+
+    loop for each Node
+        S->>Nd: onTick()
+
+    alt reached destination
+        Note over Nw,Nd: continue
+    end
+
+        Nd->>Sc: scheduleSend(packet, nextNode)
+        Note right of Nd: Envío programado<br/>para final del tick
+        loop for each Packet in node.queue
+            S->>S: increment time in queue
+        end
+    end
+
+    Note over S,Nw: Scheduler contiene los envíos pendientes
+
+        S->>Sc: flushPending()
+        Sc-->>S: pending sends
+    loop for each pending send
+        S->>Nw: send(packet, nextNode)
+        Nw->>Nd: receivePacket(packet)
+        alt packet.destination == node.id
+            S->>R: registerDelivered(packet)
+        else
+            S->>R: registerHop(packet)
+        end
+    end
+
+    S->>S: time++

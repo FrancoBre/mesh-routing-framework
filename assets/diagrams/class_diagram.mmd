@@ -1,0 +1,96 @@
+---
+config:
+  layout: elk
+---
+classDiagram
+direction LR
+    class Main {
+	    +Simulation
+	    +main(args)
+    }
+    class TopologyType {
+	    +GRID_6x6
+    }
+    class AlgorithmType {
+	    +Q_ROUTING
+	    +DIJKSTRA
+    }
+    class MetricType {
+	    +AVG_DELIVERY_TIME
+    }
+    class ExportType {
+	    +JSON
+	    +CSV
+	    +LOGS
+    }
+    class Simulation {
+	    -config: SimulationConfig
+	    -network: Network
+	    -scheduler: Scheduler
+	    -time: int
+	    +tick()
+	    +run()
+    }
+    class Registry {
+	    +registerHop(Packet)
+	    +registerReceived(Packet)
+    }
+    class Scheduler {
+	    +pendingSends: List[Packet]
+	    +flushPending()
+	    +schedule(Packet, Node)
+    }
+    class SimulationConfig {
+	    +topology: TopologyType
+	    +algorithm: List[AlgorithmType]
+	    +totalPackets: int
+	    +packetInjectGap: int
+	    +seed: long
+	    +metrics: List[MetricType]
+	    +exportTo: List[ExportType]
+    }
+    class Application {
+	    +onTick()
+    }
+    class Network {
+	    +nodes: List[Node]
+	    +create(topology)
+	    +sendPacket(Packet, NodeId)
+    }
+    class Packet {
+	    +id: PacketId
+	    +origin: Node
+	    +destination: Node
+	    +reachedDestination: bool
+	    +timeInQueue: int
+    }
+    class Hop {
+	    +packet: Packet
+	    +from: NodeId
+	    +to: NodeId
+	    +sent: int
+	    +received: int
+    }
+    class Node {
+	    +id: NodeId
+	    +neighbors: List
+	    +application: Application
+	    +queue: Queue[Packet]
+	    +network: Network
+	    +sendPacket(Packet, Node)
+	    +receivePacket(Packet, Node)
+	    +onTick()
+    }
+	<<singleton>> Registry
+	<<singleton>> Scheduler
+	<<interface>> Application
+    Main --> Simulation
+    Simulation --> SimulationConfig
+    Simulation --> Network
+    Simulation --> Scheduler
+    Simulation --> Registry
+    Network --> Node
+    Node --> Packet
+    Node --> Application
+    Registry --> Hop
+    Scheduler --> Packet

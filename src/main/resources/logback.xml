@@ -1,0 +1,15 @@
+<configuration>
+    <property file="src/main/resources/application.properties"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="${log.level.root:-DEBUG}">
+        <appender-ref ref="CONSOLE" />
+    </root>
+
+    <logger name="org.ungs.meshroutingframework" level="${log.level.app:-DEBUG}" />
+</configuration>
