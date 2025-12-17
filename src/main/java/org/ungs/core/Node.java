@@ -31,6 +31,7 @@ public class Node {
 
   public record Id(int value) {}
 
+  @Override
   public String toString() {
     return "Node{" + "id=" + id + '}';
   }

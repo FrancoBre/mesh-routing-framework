@@ -1,7 +1,6 @@
 package org.ungs.core;
 
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 
 @Getter
@@ -14,18 +13,21 @@ public class Packet {
 
   private double timeInQueue;
 
-  @Setter private boolean reachedDestination;
+  private double arrivalTime;
 
   public Packet(Id id, Node.Id origin, Node.Id destination) {
     this.id = id;
     this.origin = origin;
     this.destination = destination;
-    this.reachedDestination = false;
     this.timeInQueue = 0.0;
   }
 
   public void incrementTimeInQueue() {
     this.timeInQueue += 1;
+  }
+
+  public void markAsReceived() {
+    this.arrivalTime = Simulation.TIME;
   }
 
   public record Id(int value) {}

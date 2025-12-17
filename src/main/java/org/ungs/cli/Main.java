@@ -39,7 +39,6 @@ public class Main {
     var metrics = MetricLoader.createMetrics(config.metrics());
 
     // add metrics to registry
-
     Registry.getInstance().setMetrics(metrics);
 
     // start simulation

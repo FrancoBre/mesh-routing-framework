@@ -12,7 +12,7 @@ public final class AvgDeliveryTimePreset implements MetricPreset {
   }
 
   @Override
-  public Metric<List<Tuple<Integer, Double>>> createMetric() {
+  public Metric<List<Tuple<Double, Double>>> createMetric() {
     return new AvgDeliveryTimeMetric();
   }
 }

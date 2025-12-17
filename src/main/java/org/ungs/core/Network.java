@@ -1,26 +1,37 @@
 package org.ungs.core;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Getter
 @ToString
-@RequiredArgsConstructor
 class Network {
 
   private final Registry registry = Registry.getInstance();
 
   private final List<Node> nodes;
 
-  Node getNode(Node.Id origin) {
+  public Network() {
+    this.nodes = new ArrayList<>();
+  }
+
+  public void addNode(Node node) {
+    this.nodes.add(node);
+    this.nodes.sort(Comparator.comparing(n -> n.getId().value()));
+  }
+
+  Node getNode(Node.Id nodeId) {
     return nodes.stream()
-        .filter(node -> node.getId().equals(origin))
+        .filter(node -> node.getId().equals(nodeId))
         .findFirst()
-        .orElseThrow(() -> new IllegalArgumentException("Node not found: " + origin));
+        .orElseThrow(() -> new IllegalArgumentException("Node not found: " + nodeId));
+  }
+
+  public List<Node> getNodes() {
+    return List.copyOf(this.nodes);
   }
 
   void sendPacket(Node.Id from, Node.Id to, Packet packet) {
@@ -47,7 +58,7 @@ class Network {
         from.value(),
         to.value());
 
-    registry.registerHop(packet, from, to, Simulation.TIME, Simulation.TIME++);
+    registry.registerHop(packet, from, to, Simulation.TIME, Simulation.TIME + 1);
     receiverNode.receivePacket(packet);
   }
 }

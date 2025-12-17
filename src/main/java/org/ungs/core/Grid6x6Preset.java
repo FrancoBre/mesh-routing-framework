@@ -12,10 +12,8 @@ public final class Grid6x6Preset implements TopologyPreset {
 
   @Override
   public Network createNetwork() {
-    return new Network(this.createIrregular6x6Grid());
-  }
+    var network = new Network();
 
-  private List<Node> createIrregular6x6Grid() {
     List<Node> nodes = new ArrayList<>();
     // Initialize nodes
     for (int i = 0; i < 36; i++) {
@@ -38,7 +36,8 @@ public final class Grid6x6Preset implements TopologyPreset {
     remove(nodes, 14, 20);
     remove(nodes, 15, 21);
 
-    return nodes;
+    nodes.forEach(network::addNode);
+    return network;
   }
 
   private static void connect(List<Node> nodes, int a, int b) {

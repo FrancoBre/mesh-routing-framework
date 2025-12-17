@@ -1,33 +1,39 @@
 package org.ungs.core;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.ungs.metrics.Metric;
+import org.ungs.util.FileUtils;
 
+@Slf4j
+@Getter
 public class Registry {
 
   private static final Registry INSTANCE = new Registry();
 
-  @Getter private List<Hop> route;
+  private final List<Hop> route;
 
-  @Setter private List<Packet> packetsToBeReceived;
+  private final List<Packet> activePackets;
 
-  @Getter private List<Packet> receivedPackets;
+  private final List<Packet> receivedPackets;
 
   @Setter private String currentMetricLabel;
 
-  @Getter @Setter private List<Metric<?>> metrics;
+  @Setter private List<Metric<?>> metrics;
 
-  private Map<String, Metric<?>> labeledMetrics;
+  private final Map<String, Metric<?>> labeledMetrics;
 
   private Registry() {
     this.route = new ArrayList<>();
-    this.receivedPackets = new ArrayList<>();
     this.labeledMetrics = new HashMap<>();
+    this.activePackets = new ArrayList<>();
+    this.receivedPackets = new ArrayList<>();
   }
 
   public static Registry getInstance() {
@@ -39,8 +45,7 @@ public class Registry {
   }
 
   public boolean allPacketsReceived() {
-    return packetsToBeReceived != null
-        && packetsToBeReceived.stream().allMatch(Packet::isReachedDestination);
+    return activePackets.isEmpty();
   }
 
   public void registerHop(Packet packet, Node.Id from, Node.Id to, double sent, double received) {
@@ -49,12 +54,39 @@ public class Registry {
   }
 
   public void registerReceivedPacket(Packet packet) {
+    packet.markAsReceived();
+    activePackets.remove(packet);
     receivedPackets.add(packet);
+  }
+
+  public void registerActivePackets(List<Packet> packets) {
+    activePackets.addAll(packets);
+  }
+
+  public void reset() {
+    route.clear();
+    activePackets.clear();
+    receivedPackets.clear();
+    for (Metric<?> metric : labeledMetrics.values()) {
+      metric.reset();
+    }
   }
 
   public void collectMetrics() {
     for (Metric<?> metric : labeledMetrics.values()) {
       metric.collect();
+    }
+  }
+
+  public void plotMetrics() {
+    try {
+      String resultsFileName = FileUtils.getNextResultsFolder() + "/" + currentMetricLabel;
+
+      for (Metric<?> metric : labeledMetrics.values()) {
+        metric.plot(resultsFileName);
+      }
+    } catch (IOException e) {
+      log.error("Failed to create results folder", e);
     }
   }
 

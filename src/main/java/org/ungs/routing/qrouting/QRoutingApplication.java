@@ -1,8 +1,16 @@
 package org.ungs.routing.qrouting;
 
+import static org.ungs.core.Simulation.RANDOM;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.ungs.core.Node;
-import org.ungs.core.Packet;
 import org.ungs.core.Registry;
 import org.ungs.core.Scheduler;
 import org.ungs.core.Simulation;
@@ -11,14 +19,19 @@ import org.ungs.routing.RoutingApplication;
 @Slf4j
 public class QRoutingApplication extends RoutingApplication {
 
+  private static final double ETA = 0.5; // learning rate
+  private static final double EPSILON_EQ_TOL = 1e-6; // for comparing doubles (not exploration)
+  private static final double STEP_TIME = 1.0;
+
+  @Getter private final QTable qTable;
+
   public QRoutingApplication(Node node) {
     super(Registry.getInstance(), Scheduler.getInstance(), node);
+    this.qTable = new QTable();
   }
 
   @Override
   public void onTick() {
-    log.debug("[nodeId={}, time={}]: Q-Routing tick", this.getNodeId(), Simulation.TIME);
-
     var packetToProcessOrEmpty = this.getNextPacket();
 
     if (packetToProcessOrEmpty.isEmpty()) {
@@ -37,23 +50,139 @@ public class QRoutingApplication extends RoutingApplication {
       return;
     }
 
-    var nextHop = this.selectNextHop(packetToProcess);
+    var neighbors = this.getNode().getNeighbors();
+    List<Double> qValues = new ArrayList<>();
 
-    this.getScheduler().schedule(this.getNodeId(), nextHop, packetToProcess);
-    log.info(
-        "[time={}]: Packet {} forwarded from Node {} to Node {}",
+    for (Node neighbor : neighbors) {
+      double qValue =
+          qTable.get(this.getNodeId(), neighbor.getId(), packetToProcess.getDestination());
+      qValues.add(qValue);
+    }
+
+    double minQ = qValues.stream().min(Double::compare).orElse(0.0);
+
+    List<Node> bestCandidates = new ArrayList<>();
+    for (int i = 0; i < neighbors.size(); i++) {
+      if (Math.abs(qValues.get(i) - minQ) < EPSILON_EQ_TOL) {
+        bestCandidates.add(neighbors.get(i));
+      }
+    }
+
+    // Random tie-break among best candidates
+    Node bestNextNode;
+    if (bestCandidates.size() > 1) {
+      bestNextNode = bestCandidates.get(RANDOM.nextInt(bestCandidates.size()));
+    } else {
+      bestNextNode = bestCandidates.get(0);
+    }
+
+    log.debug(
+        "[onTick] Time={} - NodeId={} - QTable={}", Simulation.TIME, this.getNodeId(), qTable);
+    log.debug(
+        "[onTick] Time={} - NodeId={} - Chose next node {} for packet {}",
         Simulation.TIME,
-        packetToProcess.getId(),
         this.getNodeId(),
-        nextHop);
+        bestNextNode.getId(),
+        packetToProcess.getId());
+
+    // temporal-difference update
+    double oldEstimation =
+        qTable.get(this.getNodeId(), bestNextNode.getId(), packetToProcess.getDestination());
+
+    // next node's best estimate (min Q-value among its neighbors)
+    Node nextNode = bestNextNode;
+    var nextNodeApp = (QRoutingApplication) nextNode.getApplication();
+    double minNextQ = Double.MAX_VALUE;
+
+    for (Node neighborOfNext : nextNode.getNeighbors()) {
+      double qVal =
+          nextNodeApp
+              .getQTable()
+              .get(nextNode.getId(), neighborOfNext.getId(), packetToProcess.getDestination());
+      if (qVal < minNextQ) {
+        minNextQ = qVal;
+      }
+    }
+
+    double q = packetToProcess.getTimeInQueue();
+    double t = minNextQ;
+
+    double delta = ETA * ((q + STEP_TIME + t) - oldEstimation);
+    double newValue = oldEstimation + delta;
+
+    log.info(
+        "[tick] Time={} - NodeId={} - Updating Q-value [from={}, destination={}, to={}] from {} to {}",
+        Simulation.TIME,
+        this.getNodeId(),
+        this.getNodeId(),
+        packetToProcess.getDestination(),
+        bestNextNode.getId(),
+        String.format("%.2f", oldEstimation),
+        String.format("%.2f", newValue));
+
+    qTable.set(this.getNodeId(), bestNextNode.getId(), packetToProcess.getDestination(), newValue);
+
+    this.getScheduler().schedule(this.getNodeId(), bestNextNode.getId(), packetToProcess);
   }
 
-  private Node.Id selectNextHop(Packet packetToProcess) {
-    var neighbors = this.getNode().getNeighbors();
+  private static class QTable {
 
-    // TODO
-    // Placeholder logic: randomly select a neighbor as the next hop
-    var randomIndex = (int) (Math.random() * neighbors.size());
-    return neighbors.get(randomIndex).getId();
+    @Getter private final Set<QValue> qValues;
+
+    public QTable() {
+      this.qValues = new HashSet<>();
+    }
+
+    public double get(Node.Id from, Node.Id to, Node.Id destination) {
+      return qValues.stream()
+          .filter(
+              q ->
+                  q.getFrom().equals(from)
+                      && q.getTo().equals(to)
+                      && q.getDestination().equals(destination))
+          .map(QValue::getValue)
+          .findFirst()
+          .orElse(0.0);
+    }
+
+    public void set(Node.Id from, Node.Id to, Node.Id destination, double value) {
+      qValues.stream()
+          .filter(
+              q ->
+                  q.getFrom().equals(from)
+                      && q.getTo().equals(to)
+                      && q.getDestination().equals(destination))
+          .findFirst()
+          .ifPresentOrElse(
+              q -> q.setValue(value), () -> qValues.add(new QValue(from, to, destination, value)));
+    }
+
+    @Override
+    public String toString() {
+      if (qValues.isEmpty()) {
+        return "empty";
+      }
+      StringBuilder sb = new StringBuilder();
+      sb.append(String.format("\n%-8s %-8s %-12s %-8s%n", "FROM", "TO", "DESTINATION", "VALUE"));
+      sb.append("------------------------------------------------\n");
+      for (QValue q : qValues) {
+        sb.append(
+            String.format(
+                "%-8s %-8s %-12s %-8.2f%n",
+                q.from.value(), q.to.value(), q.destination.value(), q.value));
+      }
+      return sb.toString();
+    }
+  }
+
+  @Getter
+  @AllArgsConstructor
+  private static class QValue {
+
+    private final Node.Id from;
+    private final Node.Id to;
+    private final Node.Id destination;
+
+    @Setter private double value;
   }
 }

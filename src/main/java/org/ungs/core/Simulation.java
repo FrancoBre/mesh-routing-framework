@@ -2,6 +2,7 @@ package org.ungs.core;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.ungs.metrics.Metric;
@@ -12,6 +13,7 @@ import org.ungs.routing.RoutingApplicationLoader;
 public class Simulation {
 
   public static Double TIME = 0.0;
+  public static Random RANDOM;
 
   private final SimulationConfig config;
   private final Network network;
@@ -23,6 +25,7 @@ public class Simulation {
     this.network = network;
     this.scheduler = Scheduler.getInstance();
     this.registry = Registry.getInstance();
+    RANDOM = new MersenneTwister(config.seed());
   }
 
   public void run() {
@@ -73,7 +76,7 @@ public class Simulation {
                   .mapToObj(i -> new Packet(new Packet.Id(i), origin, destination))
                   .toList());
 
-      registry.setPacketsToBeReceived(packets);
+      registry.registerActivePackets(packets);
 
       // run simulation until all packets are received
       while (!registry.allPacketsReceived()) {
@@ -92,11 +95,13 @@ public class Simulation {
 
         tick();
       }
+
+      registry.plotMetrics();
     }
   }
 
   private void tick() {
-    log.debug("[time={}] Simulation tick", Simulation.TIME);
+    log.debug("[time={}] Simulation tick\n\n", Simulation.TIME);
 
     for (Node node : network.getNodes()) {
       node.getApplication().onTick();
@@ -114,5 +119,6 @@ public class Simulation {
             });
 
     registry.collectMetrics();
+    Simulation.TIME++;
   }
 }
