@@ -2,6 +2,7 @@ package org.ungs.core;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +58,23 @@ public class Registry {
     packet.markAsReceived();
     activePackets.remove(packet);
     receivedPackets.add(packet);
+  }
+
+  public double getDeliveryTime(Packet packet) {
+    List<Hop> hops =
+        route.stream()
+            .filter(h -> h.packet().equals(packet))
+            .sorted(Comparator.comparingDouble(Hop::sent))
+            .toList();
+
+    if (hops.isEmpty()) {
+      return 0.0;
+    }
+
+    double firstSent = hops.get(0).sent();
+    double lastReceived = hops.get(hops.size() - 1).received();
+
+    return lastReceived - firstSent;
   }
 
   public void registerActivePackets(List<Packet> packets) {

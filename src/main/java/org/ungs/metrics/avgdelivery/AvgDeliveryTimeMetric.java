@@ -6,7 +6,6 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.knowm.xchart.BitmapEncoder;
 import org.knowm.xchart.XYChartBuilder;
-import org.ungs.core.Packet;
 import org.ungs.core.Registry;
 import org.ungs.core.Simulation;
 import org.ungs.metrics.Metric;
@@ -21,7 +20,7 @@ public class AvgDeliveryTimeMetric implements Metric<List<Tuple<Double, Double>>
 
   public AvgDeliveryTimeMetric() {
     this.registry = Registry.getInstance();
-    this.sampleEvery = 100; // sample every N ticks
+    this.sampleEvery = 10; // sample every N ticks
     this.dataPoints = new ArrayList<>();
   }
 
@@ -37,7 +36,7 @@ public class AvgDeliveryTimeMetric implements Metric<List<Tuple<Double, Double>>
     }
 
     double avgDeliveryTime =
-        receivedPackets.stream().mapToDouble(Packet::getArrivalTime).average().orElse(0.0);
+        receivedPackets.stream().mapToDouble(registry::getDeliveryTime).average().orElse(0.0);
 
     Double currentTime = Simulation.TIME;
     dataPoints.add(new Tuple<>(currentTime, avgDeliveryTime));
