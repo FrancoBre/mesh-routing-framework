@@ -3,6 +3,7 @@ package org.ungs.routing.qrouting;
 import static org.ungs.core.Simulation.RANDOM;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -50,7 +51,8 @@ public class QRoutingApplication extends RoutingApplication {
       return;
     }
 
-    var neighbors = this.getNode().getNeighbors();
+    var neighbors = new ArrayList<>(this.getNode().getNeighbors());
+    neighbors.sort(Comparator.comparing(n -> n.getId().value()));
     List<Double> qValues = new ArrayList<>();
 
     for (Node neighbor : neighbors) {
@@ -71,7 +73,7 @@ public class QRoutingApplication extends RoutingApplication {
     // Random tie-break among best candidates
     Node bestNextNode;
     if (bestCandidates.size() > 1) {
-      bestNextNode = bestCandidates.get(RANDOM.nextInt(bestCandidates.size()));
+      bestNextNode = bestCandidates.get(RANDOM.nextIndex(bestCandidates.size()));
     } else {
       bestNextNode = bestCandidates.get(0);
     }

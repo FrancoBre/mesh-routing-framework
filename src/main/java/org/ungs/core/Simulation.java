@@ -2,18 +2,18 @@ package org.ungs.core;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.ungs.metrics.Metric;
 import org.ungs.routing.AlgorithmType;
 import org.ungs.routing.RoutingApplicationLoader;
+import org.ungs.util.DeterministicRng;
 
 @Slf4j
 public class Simulation {
 
   public static Double TIME = 0.0;
-  public static Random RANDOM;
+  public static DeterministicRng RANDOM;
 
   private final SimulationConfig config;
   private final Network network;
@@ -25,7 +25,7 @@ public class Simulation {
     this.network = network;
     this.scheduler = Scheduler.getInstance();
     this.registry = Registry.getInstance();
-    RANDOM = new MersenneTwister(config.seed());
+    RANDOM = new DeterministicRng(config.seed());
   }
 
   public void run() {

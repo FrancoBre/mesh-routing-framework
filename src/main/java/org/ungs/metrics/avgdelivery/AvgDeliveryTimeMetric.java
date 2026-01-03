@@ -21,7 +21,7 @@ public class AvgDeliveryTimeMetric implements Metric<List<Tuple<Double, Double>>
 
   public AvgDeliveryTimeMetric() {
     this.registry = Registry.getInstance();
-    this.sampleEvery = 10; // sample every N ticks
+    this.sampleEvery = 100; // sample every N ticks
     this.dataPoints = new ArrayList<>();
   }
 
