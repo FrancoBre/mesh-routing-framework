@@ -32,6 +32,7 @@ public class Simulation {
 
     for (AlgorithmType algorithm : config.algorithms()) {
 
+      registry.reset();
       log.info("[time={}] Running simulation with algorithm: {}", Simulation.TIME, algorithm);
 
       // register metrics with labels
@@ -96,7 +97,7 @@ public class Simulation {
         tick();
       }
 
-      registry.plotMetrics();
+      registry.plotMetrics(config);
     }
   }
 
@@ -110,6 +111,12 @@ public class Simulation {
     network.getNodes().stream()
         .flatMap(node -> node.getQueue().stream())
         .forEach(Packet::incrementTimeInQueue);
+
+    if (Simulation.TIME % 10 == 0) {
+      int maxQueueSize =
+          network.getNodes().stream().mapToInt(node -> node.getQueue().size()).max().orElse(0);
+      log.info("[time={}]: Max queue size across all nodes: {}", Simulation.TIME, maxQueueSize);
+    }
 
     scheduler
         .flushPendingSends()

@@ -11,6 +11,7 @@ public final class RoutingApplicationLoader {
 
   static {
     register(new QRoutingApplicationPreset());
+    register(new ShortestPathApplicationPreset());
   }
 
   private static void register(RoutingApplicationPreset preset) {

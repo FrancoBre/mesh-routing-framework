@@ -1,0 +1,8 @@
+Simulation Configuration:
+Topology: GRID_6X6
+Algorithms: [SHORTEST_PATH]
+Total Packets: 3000
+Packet Inject Gap: 1
+Seed: 42
+Metrics: [AVG_DELIVERY_TIME]
+Export To: [LOG_FILE]

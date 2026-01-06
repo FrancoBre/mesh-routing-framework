@@ -1,29 +1,42 @@
 package org.ungs.core;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ToString
-class Network {
+public class Network {
 
   private final Registry registry = Registry.getInstance();
 
   private final List<Node> nodes;
 
+  private final List<TopologyListener> listeners = new ArrayList<>();
+
   public Network() {
     this.nodes = new ArrayList<>();
+  }
+
+  public void addTopologyListener(TopologyListener l) {
+    listeners.add(l);
   }
 
   public void addNode(Node node) {
     this.nodes.add(node);
     this.nodes.sort(Comparator.comparing(n -> n.getId().value()));
+
+    for (TopologyListener l : listeners) {
+      l.onNodeAdded(node);
+    }
   }
 
-  Node getNode(Node.Id nodeId) {
+  public Node getNode(Node.Id nodeId) {
     return nodes.stream()
         .filter(node -> node.getId().equals(nodeId))
         .findFirst()
@@ -60,5 +73,37 @@ class Network {
 
     registry.registerHop(packet, from, to, Simulation.TIME, Simulation.TIME + 1);
     receiverNode.receivePacket(packet);
+  }
+
+  public int getDistanceTo(Node.Id from, Node.Id destination) {
+    if (from.equals(destination)) {
+      return 0;
+    }
+
+    Map<Node.Id, Integer> dist = new HashMap<>();
+    ArrayDeque<Node> q = new ArrayDeque<>();
+
+    Node fromNode = getNode(from);
+    dist.put(from, 0);
+    q.add(fromNode);
+
+    while (!q.isEmpty()) {
+      Node cur = q.poll();
+      int curDist = dist.get(cur.getId());
+
+      for (Node nb : cur.getNeighbors()) {
+        Node.Id nbId = nb.getId();
+        if (!dist.containsKey(nbId)) {
+          dist.put(nbId, curDist + 1);
+          if (nbId.equals(destination)) {
+            return curDist + 1;
+          }
+          q.add(nb);
+        }
+      }
+    }
+
+    // No path found
+    return Integer.MAX_VALUE;
   }
 }

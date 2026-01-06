@@ -14,6 +14,7 @@ public class Node {
   private final Node.Id id;
   private final List<Node> neighbors;
   private final Deque<Packet> queue = new ArrayDeque<>();
+  private final Network network;
 
   private RoutingApplication application;
 

@@ -17,7 +17,7 @@ public final class Grid6x6Preset implements TopologyPreset {
     List<Node> nodes = new ArrayList<>();
     // Initialize nodes
     for (int i = 0; i < 36; i++) {
-      nodes.add(new Node(new Node.Id(i), new ArrayList<>()));
+      nodes.add(new Node(new Node.Id(i), new ArrayList<>(), network));
     }
 
     // Connect neighbors in a regular grid

@@ -37,6 +37,16 @@ public class Registry {
     this.receivedPackets = new ArrayList<>();
   }
 
+  private static final String RESULTS_FILE_NAME;
+
+    static {
+        try {
+            RESULTS_FILE_NAME = FileUtils.getNextResultsFolder();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
   public static Registry getInstance() {
     return INSTANCE;
   }
@@ -82,6 +92,7 @@ public class Registry {
   }
 
   public void reset() {
+    Simulation.TIME = 0.0;
     route.clear();
     activePackets.clear();
     receivedPackets.clear();
@@ -96,16 +107,31 @@ public class Registry {
     }
   }
 
-  public void plotMetrics() {
-    try {
-      String resultsFileName = FileUtils.getNextResultsFolder() + "/" + currentMetricLabel;
+public void plotMetrics(SimulationConfig config) {
+      String resultsFileName = RESULTS_FILE_NAME + "/" + currentMetricLabel;
+
+      StringBuilder summary = new StringBuilder();
+      summary.append("Simulation Configuration:\n");
+      summary.append("Topology: ").append(config.topology()).append("\n");
+      summary.append("Algorithms: ").append(config.algorithms()).append("\n");
+      summary.append("Total Packets: ").append(config.totalPackets()).append("\n");
+      summary.append("Packet Inject Gap: ").append(config.packetInjectGap()).append("\n");
+      summary.append("Seed: ").append(config.seed()).append("\n");
+      summary.append("Metrics: ").append(config.metrics()).append("\n");
+      summary.append("Export To: ").append(config.exportTo()).append("\n");
+
+      try {
+          java.nio.file.Files.writeString(
+              java.nio.file.Path.of(resultsFileName + "_summary.txt"),
+              summary.toString()
+          );
+      } catch (IOException e) {
+          log.warn("Could not write simulation summary: {}", e.getMessage());
+      }
 
       for (Metric<?> metric : labeledMetrics.values()) {
-        metric.plot(resultsFileName);
+          metric.plot(resultsFileName);
       }
-    } catch (IOException e) {
-      log.error("Failed to create results folder", e);
-    }
   }
 
   public record Hop(Packet packet, Node.Id from, Node.Id to, double sent, double received) {}
