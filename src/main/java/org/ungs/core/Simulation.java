@@ -97,7 +97,7 @@ public class Simulation {
         tick();
       }
 
-      registry.plotMetrics(config);
+      registry.plotEverything(config);
     }
   }
 
@@ -121,9 +121,7 @@ public class Simulation {
     scheduler
         .flushPendingSends()
         .forEach(
-            (p) -> {
-              network.sendPacket(p.from(), p.to(), p.packet());
-            });
+            (p) -> network.sendPacket(p.from(), p.to(), p.packet()));
 
     registry.collectMetrics();
     Simulation.TIME++;

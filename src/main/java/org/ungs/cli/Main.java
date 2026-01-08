@@ -40,6 +40,7 @@ public class Main {
 
     // add metrics to registry
     Registry.getInstance().setMetrics(metrics);
+    Registry.getInstance().setNetwork(network);
 
     // start simulation
     var simulation = new Simulation(config, network);

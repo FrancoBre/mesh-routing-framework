@@ -35,6 +35,10 @@ public final class Grid6x6Preset implements TopologyPreset {
     // Remove vertical edges for the 2x2 hole
     remove(nodes, 14, 20);
     remove(nodes, 15, 21);
+    remove(nodes, 8, 9);
+    remove(nodes, 14, 15);
+    remove(nodes, 20, 21);
+    remove(nodes, 26, 27);
 
     nodes.forEach(network::addNode);
     return network;

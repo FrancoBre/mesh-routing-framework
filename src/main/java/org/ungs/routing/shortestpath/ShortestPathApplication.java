@@ -30,6 +30,16 @@ public class ShortestPathApplication extends RoutingApplication implements Topol
 
   @Override
   public void onTick() {
+    // if (this.getNodeId().value() == 2) {
+    //   if (Simulation.TIME % 2 != 0) {
+    //     log.debug(
+    //         "[onTick] Time={} - NodeId={} is throttled this tick",
+    //         Simulation.TIME,
+    //         this.getNodeId());
+    //     return;
+    //   }
+    // }
+
     var packetToProcessOrEmpty = this.getNextPacket();
 
     if (packetToProcessOrEmpty.isEmpty()) {
