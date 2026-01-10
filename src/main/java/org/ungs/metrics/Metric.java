@@ -1,5 +1,8 @@
 package org.ungs.metrics;
 
+import org.ungs.core.SimulationConfig;
+import org.ungs.routing.AlgorithmType;
+
 public interface Metric<T> {
 
   void collect();
@@ -8,5 +11,5 @@ public interface Metric<T> {
 
   void reset();
 
-  void plot(String filename);
+  void plot(String filename, AlgorithmType algorithmType, SimulationConfig config);
 }

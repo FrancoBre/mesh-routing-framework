@@ -2,13 +2,15 @@ package org.ungs.core;
 
 import static org.ungs.util.RouteVisualizer.saveEdgeHeatmapPng;
 
+import com.madgag.gif.fmsware.AnimatedGifEncoder;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -17,8 +19,10 @@ import java.util.Set;
 import javax.imageio.ImageIO;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.ungs.metrics.Metric;
+import org.ungs.routing.AlgorithmType;
 import org.ungs.util.FileUtils;
 
 @Slf4j
@@ -48,7 +52,7 @@ public class Registry {
     this.receivedPackets = new ArrayList<>();
   }
 
-  private static final String RESULTS_FILE_NAME;
+  public static final String RESULTS_FILE_NAME;
 
   static {
     try {
@@ -81,23 +85,6 @@ public class Registry {
     receivedPackets.add(packet);
   }
 
-  public double getDeliveryTime(Packet packet) {
-    List<Hop> hops =
-        route.stream()
-            .filter(h -> h.packet().equals(packet))
-            .sorted(Comparator.comparingDouble(Hop::sent))
-            .toList();
-
-    if (hops.isEmpty()) {
-      return 0.0;
-    }
-
-    double firstSent = hops.get(0).sent();
-    double lastReceived = hops.get(hops.size() - 1).received();
-
-    return lastReceived - firstSent;
-  }
-
   public void registerActivePackets(List<Packet> packets) {
     activePackets.addAll(packets);
   }
@@ -118,7 +105,8 @@ public class Registry {
     }
   }
 
-  public void plotEverything(SimulationConfig config) {
+  @SneakyThrows
+  public void plotEverything(SimulationConfig config, AlgorithmType algorithm) {
     String resultsFileName = RESULTS_FILE_NAME + "/" + currentMetricLabel;
 
     StringBuilder summary = new StringBuilder();
@@ -140,9 +128,11 @@ public class Registry {
 
     plotNetworkTopology(RESULTS_FILE_NAME + "/" + "network_topology.png");
     saveEdgeHeatmapPng(this.network, this.route, RESULTS_FILE_NAME + "/" + "route_heatmap.png");
+    createGifFromPngFolder(
+        RESULTS_FILE_NAME + "/" + "frames", RESULTS_FILE_NAME + "/" + "route.gif", 1);
 
     for (Metric<?> metric : labeledMetrics.values()) {
-      metric.plot(resultsFileName);
+      metric.plot(resultsFileName, algorithm, config);
     }
   }
 
@@ -262,6 +252,29 @@ public class Registry {
       log.error("[Network] Error while saving topology plot", e);
     } finally {
       g.dispose();
+    }
+  }
+
+  public static void createGifFromPngFolder(String folderPath, String outputGifPath, int delayMs)
+      throws IOException {
+    File dir = new File(folderPath);
+    File[] pngFiles = dir.listFiles((d, name) -> name.toLowerCase().endsWith(".png"));
+    if (pngFiles == null || pngFiles.length == 0) {
+      throw new IllegalArgumentException("No PNG files found in folder: " + folderPath);
+    }
+    Arrays.sort(pngFiles); // Sort by filename
+
+    try (FileOutputStream output = new FileOutputStream(outputGifPath)) {
+      AnimatedGifEncoder encoder = new AnimatedGifEncoder();
+      encoder.start(output);
+      encoder.setDelay(delayMs); // delay in ms
+      encoder.setRepeat(0); // 0 = infinite loop
+
+      for (File png : pngFiles) {
+        BufferedImage img = ImageIO.read(png);
+        encoder.addFrame(img);
+      }
+      encoder.finish();
     }
   }
 

@@ -13,6 +13,8 @@ public class Packet {
 
   private double timeInQueue;
 
+  private double departureTime;
+
   private double arrivalTime;
 
   public Packet(Id id, Node.Id origin, Node.Id destination) {
@@ -20,14 +22,23 @@ public class Packet {
     this.origin = origin;
     this.destination = destination;
     this.timeInQueue = 0.0;
+    this.departureTime = -1.0;
   }
 
   public void incrementTimeInQueue() {
     this.timeInQueue += 1;
   }
 
+  public void markAsDeparted() {
+    if (departureTime < 0) departureTime = Simulation.TIME;
+  }
+
   public void markAsReceived() {
     this.arrivalTime = Simulation.TIME;
+  }
+
+  public double getDeliveryTime() {
+    return this.getArrivalTime() - this.getDepartureTime();
   }
 
   public record Id(int value) {}

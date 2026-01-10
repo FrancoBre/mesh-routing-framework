@@ -37,4 +37,12 @@ public interface SimulationConfigLoader extends Config {
   @DefaultValue("LOG_FILE")
   @Separator(",")
   List<String> exportTo();
+
+  @Key("linear-incremental-packet-injection")
+  @DefaultValue("false")
+  boolean linearIncrementalPacketInjection();
+
+  @Key("plateau-then-linear-packet-injection")
+  @DefaultValue("false")
+  boolean plateauThenLinearPacketInjection();
 }

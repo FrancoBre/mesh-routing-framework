@@ -5,11 +5,12 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 import org.ungs.core.Network;
 import org.ungs.core.Node;
+import org.ungs.core.Packet;
 import org.ungs.core.Registry;
+import org.ungs.core.Scheduler;
 
 public final class RouteVisualizer {
 
@@ -52,46 +53,60 @@ public final class RouteVisualizer {
     write(img, outFile);
   }
 
-  public static void saveTickFramesPng(
-      Network network, List<Registry.Hop> route, int tFrom, int tTo, String dir) {
+  public static void saveTickFramePng(
+      Network network, double tick, List<Scheduler.PendingSend> sendsThisTick) {
     Map<Node.Id, Point> pos = grid6x6Positions(network);
 
-    // group hops by sent time (cast to int ticks)
-    Map<Integer, List<Registry.Hop>> byTick =
-        route.stream().collect(Collectors.groupingBy(h -> (int) Math.floor(h.sent())));
+    new File(Registry.RESULTS_FILE_NAME + "/frames").mkdirs();
 
-    new File(dir).mkdirs();
+    BufferedImage img = drawBase(network, pos, 1100, 900);
+    Graphics2D g = img.createGraphics();
+    setup(g);
 
-    for (int t = tFrom; t <= tTo; t++) {
-      BufferedImage img = drawBase(network, pos, 1100, 900);
-      Graphics2D g = img.createGraphics();
-      setup(g);
+    // 1) draw hops (red)
+    for (Scheduler.PendingSend s : sendsThisTick) {
+      Point a = pos.get(s.from());
+      Point b = pos.get(s.to());
+      if (a == null || b == null) continue;
 
-      // highlight hops sent at tick t
-      List<Registry.Hop> hops = byTick.getOrDefault(t, List.of());
-      for (Registry.Hop h : hops) {
-        Point a = pos.get(h.from());
-        Point b = pos.get(h.to());
-        if (a == null || b == null) continue;
-
-        g.setStroke(new BasicStroke(6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g.setColor(new Color(220, 50, 50, 200)); // red-ish
-        g.drawLine(a.x, a.y, b.x, b.y);
-
-        // tiny arrow head
-        drawArrowHead(g, a, b);
-      }
-
-      drawNodes(network, pos, g);
-
-      // tick label
-      g.setColor(Color.BLACK);
-      g.setFont(new Font("SansSerif", Font.BOLD, 22));
-      g.drawString("tick = " + t + "  hops=" + hops.size(), 30, 40);
-
-      g.dispose();
-      write(img, dir + "/frame_" + String.format("%05d", t) + ".png");
+      g.setStroke(new BasicStroke(6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+      Color packetColor = colorForPacket(s.packet());
+      g.setColor(packetColor);
+      g.drawLine(a.x, a.y, b.x, b.y);
+      drawArrowHead(g, a, b);
     }
+
+    // 2) draw nodes + queue size labels
+    drawNodes(network, pos, g);
+
+    // queue sizes on top
+    g.setFont(new Font("SansSerif", Font.BOLD, 16));
+    for (Node node : network.getNodes()) {
+      Point p = pos.get(node.getId());
+      if (p == null) continue;
+
+      int qSize = node.getQueue().size();
+
+      // small badge
+      int bx = p.x + 14;
+      int by = p.y - 18;
+
+      g.setColor(new Color(0, 0, 0, 160));
+      g.fillRoundRect(bx - 2, by - 16, 32, 22, 8, 8);
+
+      g.setColor(Color.WHITE);
+      g.drawString(String.valueOf(qSize), bx + 6, by);
+    }
+
+    // 3) tick label
+    g.setColor(Color.BLACK);
+    g.setFont(new Font("SansSerif", Font.BOLD, 22));
+    g.drawString("tick = " + tick + "  sends=" + sendsThisTick.size(), 30, 40);
+
+    g.dispose();
+
+    write(
+        img, Registry.RESULTS_FILE_NAME + "/frames/frame_" + String.format("%05f", tick) + ".png");
   }
 
   // ---------- layout ----------
@@ -212,5 +227,19 @@ public final class RouteVisualizer {
     static EdgeKey undirected(Node.Id x, Node.Id y) {
       return (x.value() <= y.value()) ? new EdgeKey(x, y) : new EdgeKey(y, x);
     }
+  }
+
+  private static Color colorForPacket(Packet packet) {
+    int id = packet.getId().value();
+
+    // hue ∈ [0,1), bien distribuido
+    float hue = (id * 0.61803398875f) % 1.0f; // golden ratio trick
+    float saturation = 0.85f;
+    float brightness = 0.95f;
+
+    Color base = Color.getHSBColor(hue, saturation, brightness);
+
+    // alpha para ver superposición
+    return new Color(base.getRed(), base.getGreen(), base.getBlue(), 200);
   }
 }
