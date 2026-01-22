@@ -3,6 +3,10 @@ package org.ungs.util;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
 import javax.imageio.ImageIO;
@@ -11,18 +15,22 @@ import org.ungs.core.Node;
 import org.ungs.core.Packet;
 import org.ungs.core.Registry;
 import org.ungs.core.Scheduler;
+import org.ungs.routing.AlgorithmType;
 
 public final class RouteVisualizer {
 
   // ---------- public API ----------
-  public static void saveEdgeHeatmapPng(Network network, List<Registry.Hop> route, String outFile) {
+  public static void saveEdgeHeatmapPng(Network network, List<Registry.Hop> route) {
     Map<Node.Id, Point> pos = grid6x6Positions(network);
 
     // undirected edge key: (min,max)
     Map<EdgeKey, Integer> edgeCounts = new HashMap<>();
+    AlgorithmType currentAlg = Registry.getInstance().getCurrentAlgorithm();
     for (Registry.Hop h : route) {
-      EdgeKey k = EdgeKey.undirected(h.from(), h.to());
-      edgeCounts.merge(k, 1, Integer::sum);
+      if (h.algorithm().equals(currentAlg)) {
+        EdgeKey k = EdgeKey.undirected(h.from(), h.to());
+        edgeCounts.merge(k, 1, Integer::sum);
+      }
     }
 
     int max = edgeCounts.values().stream().max(Integer::compareTo).orElse(1);
@@ -50,14 +58,29 @@ public final class RouteVisualizer {
     drawNodes(network, pos, g);
 
     g.dispose();
-    write(img, outFile);
+
+    // ---- acá elegimos el path según el algoritmo ----
+    Path algoDir = Registry.algorithmDir(Registry.getInstance().getCurrentAlgorithm());
+    try {
+      Files.createDirectories(algoDir);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+
+    Path out = algoDir.resolve("route_heatmap.png");
+    write(img, out.toString());
   }
 
   public static void saveTickFramePng(
       Network network, double tick, List<Scheduler.PendingSend> sendsThisTick) {
     Map<Node.Id, Point> pos = grid6x6Positions(network);
 
-    new File(Registry.RESULTS_FILE_NAME + "/frames").mkdirs();
+    Path framesDir = Registry.algorithmFramesDir(Registry.getInstance().getCurrentAlgorithm());
+    try {
+      Files.createDirectories(framesDir);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
 
     BufferedImage img = drawBase(network, pos, 1100, 900);
     Graphics2D g = img.createGraphics();
@@ -89,7 +112,7 @@ public final class RouteVisualizer {
 
       // small badge
       int bx = p.x + 14;
-      int by = p.y - 18;
+      int by = p.y - 42;
 
       g.setColor(new Color(0, 0, 0, 160));
       g.fillRoundRect(bx - 2, by - 16, 32, 22, 8, 8);
@@ -105,8 +128,14 @@ public final class RouteVisualizer {
 
     g.dispose();
 
-    write(
-        img, Registry.RESULTS_FILE_NAME + "/frames/frame_" + String.format("%05f", tick) + ".png");
+    String filename = String.format("tick-%05.0f.png", tick);
+    Path out = framesDir.resolve(filename);
+
+    try {
+      ImageIO.write(img, "png", out.toFile());
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
   // ---------- layout ----------

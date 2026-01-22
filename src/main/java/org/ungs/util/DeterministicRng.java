@@ -16,11 +16,22 @@ public final class DeterministicRng {
     return z ^ (z >>> 31);
   }
 
+  public int nextInt(int _int) {
+    return (int) nextLong() % _int;
+  }
+
   public int nextIndex(int bound) {
     if (bound <= 0) {
       throw new IllegalArgumentException("bound must be > 0");
     }
     long r = nextLong();
     return (int) Long.remainderUnsigned(r, bound);
+  }
+
+  public double nextUnitDouble() {
+    // 53 bits of precision like java Random.nextDouble()
+    long r = nextLong();
+    long x = (r >>> 11); // keep top 53 bits
+    return x * (1.0 / (1L << 53));
   }
 }

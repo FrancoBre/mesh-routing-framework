@@ -106,4 +106,14 @@ public class Network {
     // No path found
     return Integer.MAX_VALUE;
   }
+
+  public int packetsInFlight() {
+    return nodes.stream().mapToInt(node -> node.getQueue().size()).sum();
+  }
+
+  public boolean isNeighbor(Node.Id a, Node.Id b) {
+    Node nodeA = getNode(a);
+    Node nodeB = getNode(b);
+    return nodeA.getNeighbors().contains(nodeB);
+  }
 }

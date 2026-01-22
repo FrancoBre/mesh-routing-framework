@@ -1,5 +1,6 @@
 package org.ungs.cli;
 
+import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.aeonbits.owner.ConfigFactory;
 import org.ungs.core.Registry;
@@ -11,7 +12,7 @@ import org.ungs.metrics.MetricLoader;
 @Slf4j
 public class Main {
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException {
 
     log.info(
         """

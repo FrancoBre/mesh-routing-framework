@@ -12,4 +12,6 @@ public interface Metric<T> {
   void reset();
 
   void plot(String filename, AlgorithmType algorithmType, SimulationConfig config);
+
+  void plotAll(String filename, SimulationConfig config);
 }

@@ -9,6 +9,9 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -19,11 +22,12 @@ import java.util.Set;
 import javax.imageio.ImageIO;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.ungs.metrics.Metric;
+import org.ungs.metrics.avgdelivery.AvgDeliveryTimeMetric;
 import org.ungs.routing.AlgorithmType;
 import org.ungs.util.FileUtils;
+import org.ungs.util.Tuple;
 
 @Slf4j
 @Getter
@@ -39,17 +43,23 @@ public class Registry {
 
   @Setter private String currentMetricLabel;
 
+  @Getter @Setter private AlgorithmType currentAlgorithm;
+
   @Setter private List<Metric<?>> metrics;
 
   @Setter private Network network;
 
   private final Map<String, Metric<?>> labeledMetrics;
 
+  Map<AlgorithmType, AvgDeliveryTimeMetric> metricsByAlgorithm;
+
   private Registry() {
     this.route = new ArrayList<>();
     this.labeledMetrics = new HashMap<>();
     this.activePackets = new ArrayList<>();
     this.receivedPackets = new ArrayList<>();
+    this.metricsByAlgorithm = new HashMap<>();
+    this.currentAlgorithm = null;
   }
 
   public static final String RESULTS_FILE_NAME;
@@ -75,7 +85,7 @@ public class Registry {
   }
 
   public void registerHop(Packet packet, Node.Id from, Node.Id to, double sent, double received) {
-    Hop hop = new Hop(packet, from, to, sent, received);
+    Hop hop = new Hop(packet, from, to, sent, received, currentAlgorithm);
     route.add(hop);
   }
 
@@ -90,50 +100,87 @@ public class Registry {
   }
 
   public void reset() {
-    Simulation.TIME = 0.0;
+    route.clear();
+    activePackets.clear();
+    receivedPackets.clear();
+    currentAlgorithm = null;
+  }
+
+  public void resetAll() {
     route.clear();
     activePackets.clear();
     receivedPackets.clear();
     for (Metric<?> metric : labeledMetrics.values()) {
       metric.reset();
     }
+    currentAlgorithm = null;
   }
 
   public void collectMetrics() {
+    // warmup
+    if (Simulation.TIME < 1000) {
+      return;
+    }
     for (Metric<?> metric : labeledMetrics.values()) {
       metric.collect();
     }
   }
 
-  @SneakyThrows
-  public void plotEverything(SimulationConfig config, AlgorithmType algorithm) {
-    String resultsFileName = RESULTS_FILE_NAME + "/" + currentMetricLabel;
+  public void plotAlgorithmSpecific(SimulationConfig config) throws IOException {
 
-    StringBuilder summary = new StringBuilder();
-    summary.append("Simulation Configuration:\n");
-    summary.append("Topology: ").append(config.topology()).append("\n");
-    summary.append("Algorithms: ").append(config.algorithms()).append("\n");
-    summary.append("Total Packets: ").append(config.totalPackets()).append("\n");
-    summary.append("Packet Inject Gap: ").append(config.packetInjectGap()).append("\n");
-    summary.append("Seed: ").append(config.seed()).append("\n");
-    summary.append("Metrics: ").append(config.metrics()).append("\n");
-    summary.append("Export To: ").append(config.exportTo()).append("\n");
+    // 0) configuration.txt en el root (solo una vez)
+    writeConfiguration(config);
 
-    try {
-      java.nio.file.Files.writeString(
-          java.nio.file.Path.of(resultsFileName + "_summary.txt"), summary.toString());
-    } catch (IOException e) {
-      log.warn("Could not write simulation summary: {}", e.getMessage());
+    Path root = rootDir();
+    Files.createDirectories(root);
+
+    Path algoDir = algorithmDir(currentAlgorithm);
+    Path framesDir = algorithmFramesDir(currentAlgorithm);
+    Files.createDirectories(algoDir);
+    Files.createDirectories(framesDir);
+
+    Path topologyPng = networkTopologyFile();
+    if (!Files.exists(topologyPng)) {
+      plotNetworkTopology(topologyPng.toString());
     }
 
-    plotNetworkTopology(RESULTS_FILE_NAME + "/" + "network_topology.png");
-    saveEdgeHeatmapPng(this.network, this.route, RESULTS_FILE_NAME + "/" + "route_heatmap.png");
-    createGifFromPngFolder(
-        RESULTS_FILE_NAME + "/" + "frames", RESULTS_FILE_NAME + "/" + "route.gif", 1);
+    Path heatmapPng = algoDir.resolve("route_heatmap.png");
+    saveEdgeHeatmapPng(this.network, this.route);
+    log.info("[Registry] Heatmap saved to {}", heatmapPng);
 
-    for (Metric<?> metric : labeledMetrics.values()) {
-      metric.plot(resultsFileName, algorithm, config);
+//    Path gifPath = algorithmRouteGif(currentAlgorithm);
+//    createGifFromPngFolder(framesDir.toString(), gifPath.toString(), 1);
+//    log.info("[Registry] Route GIF saved to {}", gifPath);
+
+    for (Map.Entry<String, Metric<?>> entry : labeledMetrics.entrySet()) {
+      String label = entry.getKey();
+      Metric<?> metric = entry.getValue();
+
+      if (!label.startsWith(currentAlgorithm.name() + "-")) {
+        continue;
+      }
+
+      Path basePath = algoDir.resolve(label);
+      metric.plot(basePath.toString(), currentAlgorithm, config);
+      log.info("[Registry] Metric plot saved to {}.png", basePath);
     }
+  }
+
+  public void plotEverything(SimulationConfig config) {
+
+    Map<AlgorithmType, List<Tuple<Double, Double>>> allDataPoints = new HashMap<>();
+    for (Map.Entry<String, Metric<?>> entry : labeledMetrics.entrySet()) {
+      String label = entry.getKey();
+      Metric<?> metric = entry.getValue();
+
+      if (!label.startsWith(currentAlgorithm.name() + "-")) {
+        continue;
+      }
+
+      allDataPoints.put(currentAlgorithm, ((AvgDeliveryTimeMetric) metric).getDataPoints());
+    }
+    AvgDeliveryTimeMetric.plotAll(
+        RESULTS_FILE_NAME + "/" + "comparison.png", config, allDataPoints);
   }
 
   public void plotNetworkTopology(String filename) {
@@ -278,5 +325,46 @@ public class Registry {
     }
   }
 
-  public record Hop(Packet packet, Node.Id from, Node.Id to, double sent, double received) {}
+  public void writeConfiguration(SimulationConfig config) throws IOException {
+    Path configFile = configurationFile();
+
+    if (Files.exists(configFile)) {
+      return;
+    }
+
+    Files.createDirectories(configFile.getParent());
+    Files.writeString(configFile, config.toString());
+  }
+
+  public static Path rootDir() {
+    return Paths.get(RESULTS_FILE_NAME);
+  }
+
+  public static Path algorithmDir(AlgorithmType algorithm) {
+    return rootDir().resolve(algorithm.name());
+  }
+
+  public static Path algorithmFramesDir(AlgorithmType algorithm) {
+    return algorithmDir(algorithm).resolve("frames");
+  }
+
+  public static Path algorithmRouteGif(AlgorithmType algorithm) {
+    return algorithmDir(algorithm).resolve("route.gif");
+  }
+
+  public static Path configurationFile() {
+    return rootDir().resolve("configuration.txt");
+  }
+
+  public static Path networkTopologyFile() {
+    return rootDir().resolve("network_topology.png");
+  }
+
+  public record Hop(
+      Packet packet,
+      Node.Id from,
+      Node.Id to,
+      double sent,
+      double received,
+      AlgorithmType algorithm) {}
 }

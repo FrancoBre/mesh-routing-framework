@@ -17,8 +17,12 @@ public interface SimulationConfigLoader extends Config {
   List<String> algorithm();
 
   @Key("total-packets")
-  @DefaultValue("1000")
+  @DefaultValue("0")
   int totalPackets();
+
+  @Key("total-ticks")
+  @DefaultValue("0")
+  int totalTicks();
 
   @Key("packet-inject-gap")
   @DefaultValue("10")
@@ -45,4 +49,20 @@ public interface SimulationConfigLoader extends Config {
   @Key("plateau-then-linear-packet-injection")
   @DefaultValue("false")
   boolean plateauThenLinearPacketInjection();
+
+  @Key("plateau-ramp-plateau-packet-injection")
+  @DefaultValue("false")
+  boolean plateauRampPlateauPacketInjection();
+
+  @Key("fixed-load-step-packet-injection")
+  @DefaultValue("false")
+  boolean fixedLoadStepPacketInjection();
+
+  @Key("windowed-load-packet-injection")
+  @DefaultValue("false")
+  boolean windowedLoadPacketInjection();
+
+  @Key("load-level")
+  @DefaultValue("0.8")
+  double loadLevel();
 }

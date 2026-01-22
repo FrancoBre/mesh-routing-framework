@@ -30,6 +30,10 @@ public class Node {
     return queue.pollFirst();
   }
 
+  public void emptyQueue() {
+    queue.clear();
+  }
+
   public record Id(int value) {}
 
   @Override

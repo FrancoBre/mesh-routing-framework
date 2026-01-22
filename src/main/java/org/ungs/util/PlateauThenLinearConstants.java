@@ -3,9 +3,9 @@ package org.ungs.util;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
-public class PlateauConstants {
+public class PlateauThenLinearConstants {
 
-  public static final int PLATEAU_TICKS = 500; // k tiempo
+  public static final int PLATEAU_TICKS = 200; // k tiempo
   public static final int PLATEAU_INJECT_EVERY_N_TICKS = 5; // "inyecto cada n gaps"
   public static final int PLATEAU_BATCH_SIZE = 2; // 1/2/3 paquetes por evento (carga constante)
 
