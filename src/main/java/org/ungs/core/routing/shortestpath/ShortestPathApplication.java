@@ -1,4 +1,4 @@
-package org.ungs.routing.shortestpath;
+package org.ungs.core.routing.shortestpath;
 
 import static org.ungs.core.Simulation.RANDOM;
 
@@ -15,7 +15,7 @@ import org.ungs.core.Registry;
 import org.ungs.core.Scheduler;
 import org.ungs.core.Simulation;
 import org.ungs.core.TopologyListener;
-import org.ungs.routing.RoutingApplication;
+import org.ungs.core.routing.RoutingApplication;
 
 @Slf4j
 public class ShortestPathApplication extends RoutingApplication implements TopologyListener {

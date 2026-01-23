@@ -5,9 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.aeonbits.owner.ConfigFactory;
 import org.ungs.core.Registry;
 import org.ungs.core.Simulation;
-import org.ungs.core.SimulationConfig;
 import org.ungs.core.TopologyLoader;
-import org.ungs.metrics.MetricLoader;
+import org.ungs.core.config.SimulationConfigContext;
+import org.ungs.core.metrics.MetricLoader;
 
 @Slf4j
 public class Main {
@@ -27,17 +27,17 @@ public class Main {
 
     // parse args
     var configLoader = ConfigFactory.create(SimulationConfigLoader.class);
-    var config = SimulationConfig.fromConfigLoader(configLoader);
+    var config = SimulationConfigContext.fromLoader(configLoader);
 
     log.info("Simulation configuration ready: {}", config);
 
     // build network
-    var network = TopologyLoader.createNetwork(config.topology());
+    var network = TopologyLoader.createNetwork(config.general().topology());
 
     log.info("Network created");
 
     // bootstrap metrics
-    var metrics = MetricLoader.createMetrics(config.metrics());
+    var metrics = MetricLoader.createMetrics(config.observability().metrics());
 
     // add metrics to registry
     Registry.getInstance().setMetrics(metrics);

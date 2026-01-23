@@ -23,9 +23,10 @@ import javax.imageio.ImageIO;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.ungs.metrics.Metric;
-import org.ungs.metrics.avgdelivery.AvgDeliveryTimeMetric;
-import org.ungs.routing.AlgorithmType;
+import org.ungs.core.config.SimulationConfigContext;
+import org.ungs.core.metrics.Metric;
+import org.ungs.core.metrics.avgdelivery.AvgDeliveryTimeMetric;
+import org.ungs.core.routing.AlgorithmType;
 import org.ungs.util.FileUtils;
 import org.ungs.util.Tuple;
 
@@ -126,7 +127,7 @@ public class Registry {
     }
   }
 
-  public void plotAlgorithmSpecific(SimulationConfig config) throws IOException {
+  public void plotAlgorithmSpecific(SimulationConfigContext config) throws IOException {
 
     // 0) configuration.txt en el root (solo una vez)
     writeConfiguration(config);
@@ -166,7 +167,7 @@ public class Registry {
     }
   }
 
-  public void plotEverything(SimulationConfig config) {
+  public void plotEverything(SimulationConfigContext config) {
 
     Map<AlgorithmType, List<Tuple<Double, Double>>> allDataPoints = new HashMap<>();
     for (Map.Entry<String, Metric<?>> entry : labeledMetrics.entrySet()) {
@@ -325,7 +326,7 @@ public class Registry {
     }
   }
 
-  public void writeConfiguration(SimulationConfig config) throws IOException {
+  public void writeConfiguration(SimulationConfigContext config) throws IOException {
     Path configFile = configurationFile();
 
     if (Files.exists(configFile)) {

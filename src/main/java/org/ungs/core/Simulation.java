@@ -7,9 +7,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
-import org.ungs.metrics.Metric;
-import org.ungs.routing.AlgorithmType;
-import org.ungs.routing.RoutingApplicationLoader;
+import org.ungs.core.config.SimulationConfigContext;
+import org.ungs.core.metrics.Metric;
+import org.ungs.core.routing.AlgorithmType;
+import org.ungs.core.routing.RoutingApplicationLoader;
 import org.ungs.util.DeterministicRng;
 import org.ungs.util.RouteVisualizer;
 
@@ -19,25 +20,25 @@ public class Simulation {
   public static Double TIME = 0.0;
   public static DeterministicRng RANDOM;
 
-  private final SimulationConfig config;
+  private final SimulationConfigContext config;
   private final Network network;
   private final Scheduler scheduler;
   private final Registry registry;
 
-  public Simulation(SimulationConfig config, Network network) {
+  public Simulation(SimulationConfigContext config, Network network) {
     this.config = config;
     this.network = network;
     this.scheduler = Scheduler.getInstance();
     this.registry = Registry.getInstance();
-    RANDOM = new DeterministicRng(config.seed());
+    RANDOM = new DeterministicRng(config.general().seed());
   }
 
   public void run() throws IOException {
 
-    for (AlgorithmType algorithm : config.algorithms()) {
+    for (AlgorithmType algorithm : config.general().algorithms()) {
 
       Simulation.TIME = 0.0;
-      Simulation.RANDOM = new DeterministicRng(config.seed());
+      Simulation.RANDOM = new DeterministicRng(config.general().seed());
 
       registry.resetAll();
       registry.setCurrentAlgorithm(algorithm);
@@ -51,11 +52,13 @@ public class Simulation {
                 + "-"
                 + metric.getClass().getSimpleName()
                 + "-"
-                + config.totalTicks()
+//                + config.totalTicks()
+                + 1000 // FIXME
                 + "TICKS"
                 + "-"
                 + "LOAD"
-                + config.loadLevel();
+//                + config.loadLevel();
+                + 3.5; // FIXME
 
         this.registry.addLabeledMetric(seriesName, metric);
         this.registry.setCurrentMetricLabel(seriesName);
@@ -84,11 +87,13 @@ public class Simulation {
       final int MAX_ACTIVE_PACKETS = 1000;
 
       // run simulation for a fixed number of ticks
-      while (Simulation.TIME < config.totalTicks()) {
+//      while (Simulation.TIME < config.totalTicks()) {
+          while (Simulation.TIME < 1000) { // FIXME
 
         // ---- GLOBAL injection per tick, allowing loadLevel > 1 ----
         // injectCount = floor(L) + Bernoulli(frac(L))
-        double L = config.loadLevel();
+//        double L = config.loadLevel();
+              double L = 3.5;
         int base = (int) Math.floor(L);
         double frac = L - base;
 
@@ -709,38 +714,38 @@ public class Simulation {
     Simulation.TIME++;
   }
 
-  enum TrafficInjectionMode {
-    CONSTANT_GAP,
-    ALL_AT_ONCE,
-    LINEAR_INCREMENTAL,
-    PLATEAU_THEN_LINEAR,
-    PLATEAU_RAMP_PLATEAU,
-    FIXED_LOAD_STEPS,
-    WINDOWED_LOAD;
-
-    public static TrafficInjectionMode getByConfig(SimulationConfig config) {
-      if (config.linearIncrementalPacketInjection()) {
-        return TrafficInjectionMode.LINEAR_INCREMENTAL;
-      }
-      if (config.plateauThenLinearPacketInjection()) {
-        return TrafficInjectionMode.PLATEAU_THEN_LINEAR;
-      }
-      if (config.plateauRampPlateauPacketInjection()) {
-        return TrafficInjectionMode.PLATEAU_RAMP_PLATEAU;
-      }
-      if (config.fixedLoadStepPacketInjection()) {
-        return TrafficInjectionMode.FIXED_LOAD_STEPS;
-      }
-      if (config.windowedLoadPacketInjection()) {
-        return TrafficInjectionMode.WINDOWED_LOAD;
-      }
-      if (config.packetInjectGap() > 0) {
-        return TrafficInjectionMode.CONSTANT_GAP;
-      }
-      if (config.packetInjectGap() == 0) {
-        return TrafficInjectionMode.ALL_AT_ONCE;
-      }
-      throw new IllegalArgumentException("Invalid traffic injection configuration");
-    }
-  }
+//  enum TrafficInjectionMode {
+//    CONSTANT_GAP,
+//    ALL_AT_ONCE,
+//    LINEAR_INCREMENTAL,
+//    PLATEAU_THEN_LINEAR,
+//    PLATEAU_RAMP_PLATEAU,
+//    FIXED_LOAD_STEPS,
+//    WINDOWED_LOAD;
+//
+//    public static TrafficInjectionMode getByConfig(SimulationConfig config) {
+//      if (config.linearIncrementalPacketInjection()) {
+//        return TrafficInjectionMode.LINEAR_INCREMENTAL;
+//      }
+//      if (config.plateauThenLinearPacketInjection()) {
+//        return TrafficInjectionMode.PLATEAU_THEN_LINEAR;
+//      }
+//      if (config.plateauRampPlateauPacketInjection()) {
+//        return TrafficInjectionMode.PLATEAU_RAMP_PLATEAU;
+//      }
+//      if (config.fixedLoadStepPacketInjection()) {
+//        return TrafficInjectionMode.FIXED_LOAD_STEPS;
+//      }
+//      if (config.windowedLoadPacketInjection()) {
+//        return TrafficInjectionMode.WINDOWED_LOAD;
+//      }
+//      if (config.packetInjectGap() > 0) {
+//        return TrafficInjectionMode.CONSTANT_GAP;
+//      }
+//      if (config.packetInjectGap() == 0) {
+//        return TrafficInjectionMode.ALL_AT_ONCE;
+//      }
+//      throw new IllegalArgumentException("Invalid traffic injection configuration");
+//    }
+//  }
 }

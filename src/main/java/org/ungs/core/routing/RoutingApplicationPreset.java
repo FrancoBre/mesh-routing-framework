@@ -1,4 +1,4 @@
-package org.ungs.routing;
+package org.ungs.core.routing;
 
 import org.ungs.core.Node;
 

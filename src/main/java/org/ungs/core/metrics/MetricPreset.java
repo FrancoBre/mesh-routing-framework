@@ -1,4 +1,4 @@
-package org.ungs.metrics;
+package org.ungs.core.metrics;
 
 public sealed interface MetricPreset permits AvgDeliveryTimePreset {
 

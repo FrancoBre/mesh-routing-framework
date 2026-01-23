@@ -5,7 +5,7 @@ import java.util.Deque;
 import java.util.List;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.ungs.routing.RoutingApplication;
+import org.ungs.core.routing.RoutingApplication;
 
 @Getter
 @RequiredArgsConstructor

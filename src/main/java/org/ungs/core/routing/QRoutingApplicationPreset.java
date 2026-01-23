@@ -1,7 +1,7 @@
-package org.ungs.routing;
+package org.ungs.core.routing;
 
 import org.ungs.core.Node;
-import org.ungs.routing.qrouting.QRoutingApplication;
+import org.ungs.core.routing.qrouting.QRoutingApplication;
 
 public final class QRoutingApplicationPreset implements RoutingApplicationPreset {
 

@@ -1,4 +1,4 @@
-package org.ungs.metrics;
+package org.ungs.core.metrics;
 
 import java.util.ArrayList;
 import java.util.EnumMap;

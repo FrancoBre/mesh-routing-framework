@@ -1,4 +1,4 @@
-package org.ungs.metrics.avgdelivery;
+package org.ungs.core.metrics.avgdelivery;
 
 import java.util.ArrayDeque;
 import java.util.Deque;

@@ -1,7 +1,7 @@
-package org.ungs.metrics;
+package org.ungs.core.metrics;
 
 import java.util.List;
-import org.ungs.metrics.avgdelivery.AvgDeliveryTimeMetric;
+import org.ungs.core.metrics.avgdelivery.AvgDeliveryTimeMetric;
 import org.ungs.util.Tuple;
 
 public final class AvgDeliveryTimePreset implements MetricPreset {

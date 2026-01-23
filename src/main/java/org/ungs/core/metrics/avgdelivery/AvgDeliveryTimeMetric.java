@@ -1,4 +1,4 @@
-package org.ungs.metrics.avgdelivery;
+package org.ungs.core.metrics.avgdelivery;
 
 import java.awt.BasicStroke;
 import java.io.IOException;
@@ -20,9 +20,9 @@ import org.knowm.xchart.style.markers.SeriesMarkers;
 import org.ungs.core.Packet;
 import org.ungs.core.Registry;
 import org.ungs.core.Simulation;
-import org.ungs.core.SimulationConfig;
-import org.ungs.metrics.Metric;
-import org.ungs.routing.AlgorithmType;
+import org.ungs.core.config.SimulationConfigContext;
+import org.ungs.core.metrics.Metric;
+import org.ungs.core.routing.AlgorithmType;
 import org.ungs.util.Tuple;
 
 @Slf4j
@@ -77,7 +77,7 @@ public class AvgDeliveryTimeMetric implements Metric<List<Tuple<Double, Double>>
   }
 
   @Override
-  public void plot(String filename, AlgorithmType algorithmType, SimulationConfig config) {
+  public void plot(String filename, AlgorithmType algorithmType, SimulationConfigContext config) {
     try {
       XYChart chart =
           new XYChartBuilder()
@@ -110,7 +110,7 @@ public class AvgDeliveryTimeMetric implements Metric<List<Tuple<Double, Double>>
   }
 
   @Override
-  public void plotAll(String filename, SimulationConfig config) {
+  public void plotAll(String filename, SimulationConfigContext config) {
 
     try {
       XYChart chart =
@@ -174,7 +174,7 @@ public class AvgDeliveryTimeMetric implements Metric<List<Tuple<Double, Double>>
 
   public static void plotAll(
       String filename,
-      SimulationConfig config,
+      SimulationConfigContext config,
       Map<AlgorithmType, List<Tuple<Double, Double>>> dataPointsPerAlgorithm) {
 
     try {

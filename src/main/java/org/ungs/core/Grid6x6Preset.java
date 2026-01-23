@@ -7,7 +7,7 @@ public final class Grid6x6Preset implements TopologyPreset {
 
   @Override
   public TopologyType type() {
-    return TopologyType.GRID_6X6;
+    return TopologyType._6X6_GRID;
   }
 
   @Override

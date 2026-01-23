@@ -1,4 +1,4 @@
-package org.ungs.routing;
+package org.ungs.core.routing;
 
 public enum AlgorithmType {
   Q_ROUTING,

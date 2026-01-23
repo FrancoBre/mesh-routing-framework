@@ -15,7 +15,7 @@ import org.ungs.core.Node;
 import org.ungs.core.Packet;
 import org.ungs.core.Registry;
 import org.ungs.core.Scheduler;
-import org.ungs.routing.AlgorithmType;
+import org.ungs.core.routing.AlgorithmType;
 
 public final class RouteVisualizer {
 

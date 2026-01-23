@@ -1,7 +1,7 @@
-package org.ungs.routing;
+package org.ungs.core.routing;
 
 import org.ungs.core.Node;
-import org.ungs.routing.shortestpath.ShortestPathApplication;
+import org.ungs.core.routing.shortestpath.ShortestPathApplication;
 
 public final class ShortestPathApplicationPreset implements RoutingApplicationPreset {
 
