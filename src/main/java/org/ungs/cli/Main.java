@@ -1,18 +1,15 @@
 package org.ungs.cli;
 
-import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.aeonbits.owner.ConfigFactory;
-import org.ungs.core.Registry;
-import org.ungs.core.Simulation;
-import org.ungs.core.TopologyLoader;
 import org.ungs.core.config.SimulationConfigContext;
-import org.ungs.core.metrics.MetricLoader;
+import org.ungs.core.engine.SimulationEngine;
+import org.ungs.core.topology.factory.TopologyFactory;
 
 @Slf4j
 public class Main {
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) {
 
     log.info(
         """
@@ -25,28 +22,11 @@ public class Main {
             \u001B[36m
             """);
 
-    // parse args
-    var configLoader = ConfigFactory.create(SimulationConfigLoader.class);
-    var config = SimulationConfigContext.fromLoader(configLoader);
+    var loader = ConfigFactory.create(SimulationConfigLoader.class);
+    var configCtx = SimulationConfigContext.fromLoader(loader);
 
-    log.info("Simulation configuration ready: {}", config);
+    var network = TopologyFactory.createNetwork(configCtx.general().topology());
 
-    // build network
-    var network = TopologyLoader.createNetwork(config.general().topology());
-
-    log.info("Network created");
-
-    // bootstrap metrics
-    var metrics = MetricLoader.createMetrics(config.observability().metrics());
-
-    // add metrics to registry
-    Registry.getInstance().setMetrics(metrics);
-    Registry.getInstance().setNetwork(network);
-
-    // start simulation
-    var simulation = new Simulation(config, network);
-    simulation.run();
-
-    log.info("Simulation finished");
+    new SimulationEngine(configCtx, network).run();
   }
 }
