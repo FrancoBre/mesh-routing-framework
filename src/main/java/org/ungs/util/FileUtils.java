@@ -10,6 +10,16 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class FileUtils {
 
+  public static final String RESULTS_FILE_NAME;
+
+  static {
+    try {
+      RESULTS_FILE_NAME = FileUtils.getNextResultsFolder();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public static String getNextResultsFolder() throws IOException {
     Path resultsDir = Paths.get(System.getProperty("user.dir"), "results");
     Files.createDirectories(resultsDir);
