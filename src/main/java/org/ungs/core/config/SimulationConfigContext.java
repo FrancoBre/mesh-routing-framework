@@ -1,5 +1,6 @@
 package org.ungs.core.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.*;
 import org.ungs.cli.SimulationConfigLoader;
 
@@ -57,5 +58,18 @@ public record SimulationConfigContext(
 
   static <E extends Enum<E>> E parseEnum(String raw, Class<E> enumClass) {
     return Enum.valueOf(enumClass, raw.trim().toUpperCase(Locale.ROOT));
+  }
+
+  @Override
+  public String toString() {
+    try {
+      ObjectMapper mapper = new ObjectMapper();
+      mapper.registerModule(new com.fasterxml.jackson.datatype.jdk8.Jdk8Module());
+      mapper.setPropertyNamingStrategy(
+          com.fasterxml.jackson.databind.PropertyNamingStrategies.SNAKE_CASE);
+      return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(this);
+    } catch (Exception e) {
+      return "{\"error\": \"Failed to serialize SimulationRuntimeContext\"}";
+    }
   }
 }

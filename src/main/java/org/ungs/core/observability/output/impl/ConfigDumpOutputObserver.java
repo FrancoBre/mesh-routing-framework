@@ -20,7 +20,7 @@ public record ConfigDumpOutputObserver(Path outDir) implements SimulationObserve
 
     try {
       Files.createDirectories(configFile.getParent());
-      Files.writeString(configFile, ctx.toString());
+      Files.writeString(configFile, ctx.getConfig().toString());
     } catch (IOException e) {
       log.error("Could not create directories for config dump observer", e);
     }

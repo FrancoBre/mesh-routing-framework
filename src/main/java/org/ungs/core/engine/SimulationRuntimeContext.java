@@ -3,7 +3,6 @@ package org.ungs.core.engine;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
-import lombok.ToString;
 import org.ungs.core.config.SimulationConfigContext;
 import org.ungs.core.network.Network;
 import org.ungs.core.network.Packet;
@@ -11,7 +10,6 @@ import org.ungs.core.observability.api.EventSink;
 import org.ungs.core.routing.api.AlgorithmType;
 import org.ungs.util.DeterministicRng;
 
-@ToString
 public final class SimulationRuntimeContext {
   @Getter private double tick;
   @Getter private DeterministicRng rng;

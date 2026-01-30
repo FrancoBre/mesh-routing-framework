@@ -16,6 +16,7 @@ public class Packet {
   private double timeInQueue;
 
   private double departureTime;
+  private double arrivalTime;
 
   public Packet(Id id, Node.Id origin, Node.Id destination) {
     this.id = id;
@@ -35,6 +36,10 @@ public class Packet {
         .emit(
             new PacketDepartedEvent(
                 this.getId(), this.getOrigin(), ctx.getTick(), ctx.getCurrentAlgorithm()));
+  }
+
+  public void markAsArrived(SimulationRuntimeContext ctx) {
+    arrivalTime = ctx.getTick();
   }
 
   public record Id(int value) {}

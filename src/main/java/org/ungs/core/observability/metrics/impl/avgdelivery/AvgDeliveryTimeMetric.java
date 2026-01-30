@@ -34,14 +34,18 @@ public final class AvgDeliveryTimeMetric
   @Override
   public void onEvent(SimulationEvent e, SimulationRuntimeContext ctx) {
     if (e instanceof PacketDeliveredEvent h) {
+      h.packet().markAsArrived(ctx);
+      deliveredPackets.add(h.packet());
+
       double t = ctx.getTick();
       if (t < warmupTicks) return;
       if (t % sampleEvery != 0) return;
 
-      deliveredPackets.add(h.packet());
       double avg =
           deliveredPackets.stream()
-              .mapToDouble((Packet p) -> h.receivedTime() - p.getDepartureTime())
+              .mapToDouble(
+                  (Packet p) ->
+                      p.getArrivalTime() - p.getDepartureTime()) // FIXME: esto creo que está mal
               .average()
               .orElse(0.0);
 
