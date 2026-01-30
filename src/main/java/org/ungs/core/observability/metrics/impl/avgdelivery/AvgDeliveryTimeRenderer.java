@@ -29,7 +29,7 @@ public final class AvgDeliveryTimeRenderer implements MetricRenderer<List<Tuple<
               .yAxisTitle("Average Delivery Time")
               .build();
 
-      double[] x = data.stream().mapToDouble(p -> p.getFirst().doubleValue()).toArray();
+      double[] x = data.stream().mapToDouble(p -> ((Number) p.getFirst()).doubleValue()).toArray();
       double[] y = data.stream().mapToDouble(Tuple::getSecond).toArray();
 
       chart.addSeries("Avg Delivery Time", x, y);

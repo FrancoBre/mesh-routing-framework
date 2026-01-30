@@ -4,4 +4,5 @@ public enum OutputType {
   HEAT_MAP,
   GIF_ROUTE,
   ROUTE_FRAMES,
+  CONFIG_DUMP
 }

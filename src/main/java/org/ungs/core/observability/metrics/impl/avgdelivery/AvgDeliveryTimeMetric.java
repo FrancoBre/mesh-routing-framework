@@ -5,11 +5,13 @@ import java.util.List;
 import org.ungs.core.engine.SimulationRuntimeContext;
 import org.ungs.core.network.Packet;
 import org.ungs.core.observability.api.SimulationEvent;
+import org.ungs.core.observability.api.SimulationObserver;
 import org.ungs.core.observability.events.PacketDeliveredEvent;
 import org.ungs.core.observability.metrics.api.Metric;
 import org.ungs.util.Tuple;
 
-public final class AvgDeliveryTimeMetric implements Metric<List<Tuple<Double, Double>>> {
+public final class AvgDeliveryTimeMetric
+    implements Metric<List<Tuple<Double, Double>>>, SimulationObserver {
 
   private final long warmupTicks;
   private final int sampleEvery;
@@ -28,20 +30,6 @@ public final class AvgDeliveryTimeMetric implements Metric<List<Tuple<Double, Do
   public void reset() {
     series.clear();
   }
-
-  //  @Override
-  //  public void onTick(SimulationRuntimeContext ctx) {
-  //    double t = ctx.getTick();
-  //    if (t < warmupTicks) return;
-  //    if (t % sampleEvery != 0) return;
-  //
-  //    var delivered = ctx.getDeliveredPackets();
-  //    if (delivered.isEmpty()) return;
-  //
-  //    double avg = delivered.stream().mapToDouble(Packet::getDeliveryTime).average().orElse(0.0);
-  //
-  //    series.add(new Tuple<>(t, avg));
-  //  }
 
   @Override
   public void onEvent(SimulationEvent e, SimulationRuntimeContext ctx) {
@@ -64,5 +52,10 @@ public final class AvgDeliveryTimeMetric implements Metric<List<Tuple<Double, Do
   @Override
   public List<Tuple<Double, Double>> snapshot() {
     return List.copyOf(series);
+  }
+
+  @Override
+  public void onAlgorithmEnd(SimulationRuntimeContext ctx) {
+    deliveredPackets.clear();
   }
 }

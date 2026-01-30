@@ -9,6 +9,9 @@ public final class NoOpObserverHub implements ObserverHub {
   public static final NoOpObserverHub INSTANCE = new NoOpObserverHub();
 
   @Override
+  public void onSimulationStart(SimulationRuntimeContext ctx) {}
+
+  @Override
   public void onSimulationEnd(SimulationRuntimeContext ctx) {}
 
   @Override

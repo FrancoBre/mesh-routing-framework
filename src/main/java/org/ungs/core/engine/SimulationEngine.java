@@ -40,6 +40,8 @@ public final class SimulationEngine {
   public void run() {
     SimulationRuntimeContext ctx = new SimulationRuntimeContext(cfg, network, observers);
 
+    observers.onSimulationStart(ctx);
+
     for (AlgorithmType algorithm : cfg.general().algorithms()) {
 
       ctx.reset(algorithm);

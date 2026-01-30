@@ -23,6 +23,7 @@ import org.ungs.core.observability.metrics.impl.avgdelivery.AvgDeliveryTimePrese
 import org.ungs.core.observability.output.api.OutputBundle;
 import org.ungs.core.observability.output.api.OutputPreset;
 import org.ungs.core.observability.output.api.OutputType;
+import org.ungs.core.observability.output.impl.ConfigDumpOutputPreset;
 import org.ungs.core.observability.output.impl.GifRouteOutputPreset;
 import org.ungs.core.observability.output.impl.HeatmapOutputPreset;
 import org.ungs.core.observability.output.impl.RouteFramesOutputPreset;
@@ -43,6 +44,7 @@ public final class ObserverHubFactory {
     registerOutput(new HeatmapOutputPreset());
     registerOutput(new GifRouteOutputPreset());
     registerOutput(new RouteFramesOutputPreset());
+    registerOutput(new ConfigDumpOutputPreset());
   }
 
   private static void registerOutput(OutputPreset preset) {
@@ -73,7 +75,12 @@ public final class ObserverHubFactory {
         if (preset == null) {
           throw new IllegalArgumentException("Unknown/unregistered metric type: " + type);
         }
-        bundles.add(preset.createBundle(simCfg, network));
+        var bundle = preset.createBundle(simCfg, network);
+        bundles.add(bundle);
+
+        if (bundle.metric() instanceof SimulationObserver observer) {
+          obs.add(observer);
+        }
       }
 
       Path outDir = resolveOutputDir(simCfg);
