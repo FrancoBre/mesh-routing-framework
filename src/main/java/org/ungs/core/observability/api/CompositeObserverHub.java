@@ -25,6 +25,11 @@ public final class CompositeObserverHub implements ObserverHub, EventSink {
   }
 
   @Override
+  public void onSimulationStart(SimulationRuntimeContext ctx) {
+    observers.forEach(o -> o.onSimulationStart(ctx));
+  }
+
+  @Override
   public void onAlgorithmStart(SimulationRuntimeContext ctx) {
     bindContext(ctx);
     observers.forEach(o -> o.onAlgorithmStart(ctx));

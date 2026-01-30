@@ -33,13 +33,12 @@ public final class AvgDeliveryTimeComparisonRenderer
               .yAxisTitle("Average Delivery Time")
               .build();
 
-      // estilos si querés (como antes)
-
       for (var entry : dataByAlgo.entrySet()) {
         AlgorithmType algo = entry.getKey();
         var points = entry.getValue();
 
-        double[] x = points.stream().mapToDouble(p -> p.getFirst().doubleValue()).toArray();
+        double[] x =
+            points.stream().mapToDouble(p -> ((Number) p.getFirst()).doubleValue()).toArray();
         double[] y = points.stream().mapToDouble(Tuple::getSecond).toArray();
 
         chart.addSeries(algo.name(), x, y);

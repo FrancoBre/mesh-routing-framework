@@ -1,5 +1,8 @@
 package org.ungs.util;
 
+import lombok.ToString;
+
+@ToString
 public final class DeterministicRng {
 
   private long state;
