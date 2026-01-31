@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import lombok.extern.slf4j.Slf4j;
-import org.ungs.core.engine.Scheduler;
 import org.ungs.core.engine.SimulationRuntimeContext;
 import org.ungs.core.network.Node;
 import org.ungs.core.observability.events.PacketDeliveredEvent;
@@ -23,7 +22,7 @@ public class ShortestPathApplication extends RoutingApplication implements Topol
   private boolean dirtyDistToDestCache = false;
 
   public ShortestPathApplication(Node node) {
-    super(Scheduler.getInstance(), node);
+    super(node);
     node.getNetwork().addTopologyListener(this);
   }
 
@@ -86,7 +85,7 @@ public class ShortestPathApplication extends RoutingApplication implements Topol
         bestNextNode.getId(),
         packetToProcess.getId());
 
-    this.getScheduler().schedule(this.getNodeId(), bestNextNode.getId(), packetToProcess);
+    ctx.schedule(this.getNodeId(), bestNextNode.getId(), packetToProcess);
   }
 
   @Override

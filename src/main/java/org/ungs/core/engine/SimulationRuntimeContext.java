@@ -5,6 +5,7 @@ import java.util.List;
 import lombok.Getter;
 import org.ungs.core.config.SimulationConfigContext;
 import org.ungs.core.network.Network;
+import org.ungs.core.network.Node;
 import org.ungs.core.network.Packet;
 import org.ungs.core.observability.api.EventSink;
 import org.ungs.core.routing.api.AlgorithmType;
@@ -19,6 +20,7 @@ public final class SimulationRuntimeContext {
   @Getter private AlgorithmType currentAlgorithm;
   @Getter private final List<Packet> notDeliveredPackets;
   @Getter private final List<Packet> deliveredPackets;
+  @Getter private final List<PendingSend> pendingSends;
 
   @Getter private final EventSink eventSink;
 
@@ -32,6 +34,7 @@ public final class SimulationRuntimeContext {
     this.eventSink = eventSink;
     this.notDeliveredPackets = new ArrayList<>();
     this.deliveredPackets = new ArrayList<>();
+    this.pendingSends = new ArrayList<>();
     reset(null);
   }
 
@@ -52,4 +55,17 @@ public final class SimulationRuntimeContext {
   public Packet.Id nextPacketId() {
     return new Packet.Id(nextPacketId++);
   }
+
+  // Phaser: every packet gets sent at the end of the tick
+  public List<PendingSend> flushPendingSends() {
+    List<PendingSend> toSend = List.copyOf(pendingSends);
+    pendingSends.clear();
+    return toSend;
+  }
+
+  public void schedule(Node.Id from, Node.Id to, Packet packet) {
+    pendingSends.add(new PendingSend(from, to, packet));
+  }
+
+  public record PendingSend(Node.Id from, Node.Id to, Packet packet) {}
 }

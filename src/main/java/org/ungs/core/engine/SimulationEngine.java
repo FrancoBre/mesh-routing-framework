@@ -92,7 +92,7 @@ public final class SimulationEngine {
         .flatMap(node -> node.getQueue().stream())
         .forEach(Packet::incrementTimeInQueue);
 
-    List<Scheduler.PendingSend> sendsThisTick = Scheduler.getInstance().flushPendingSends();
+    List<SimulationRuntimeContext.PendingSend> sendsThisTick = ctx.flushPendingSends();
 
     sendsThisTick.forEach((p) -> network.sendPacket(p.from(), p.to(), p.packet()));
 

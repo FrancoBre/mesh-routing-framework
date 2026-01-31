@@ -11,18 +11,28 @@ import org.ungs.core.observability.api.SimulationObserver;
 public record ConfigDumpOutputObserver(Path outDir) implements SimulationObserver {
 
   public void onSimulationStart(SimulationRuntimeContext ctx) {
+    Path commonDir = outDir.resolve("common");
+    Path configFile = commonDir.resolve("beautified_configuration.json");
+    Path rawPropertiesFile = commonDir.resolve("application.properties");
 
-    Path configFile = outDir.resolve("configuration.txt");
-
-    if (Files.exists(configFile)) {
+    if (Files.exists(configFile) && Files.exists(rawPropertiesFile)) {
       return;
     }
 
     try {
-      Files.createDirectories(configFile.getParent());
+      Files.createDirectories(commonDir);
+
       Files.writeString(configFile, ctx.getConfig().toString());
+
+      try (var in = getClass().getClassLoader().getResourceAsStream("application.properties")) {
+        if (in != null) {
+          Files.write(rawPropertiesFile, in.readAllBytes());
+        } else {
+          log.warn("Resource 'application.properties' not found in classpath.");
+        }
+      }
     } catch (IOException e) {
-      log.error("Could not create directories for config dump observer", e);
+      log.error("Failed to dump configuration or copy application.properties", e);
     }
   }
 }

@@ -9,7 +9,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.ungs.core.engine.Scheduler;
 import org.ungs.core.engine.SimulationRuntimeContext;
 import org.ungs.core.network.Node;
 import org.ungs.core.observability.events.PacketDeliveredEvent;
@@ -26,7 +25,7 @@ public class QRoutingApplication extends RoutingApplication {
   @Getter private final QTable qTable;
 
   public QRoutingApplication(Node node) {
-    super(Scheduler.getInstance(), node);
+    super(node);
     this.qTable = new QTable();
   }
 
@@ -128,7 +127,7 @@ public class QRoutingApplication extends RoutingApplication {
 
     qTable.set(this.getNodeId(), bestNextNode.getId(), packetToProcess.getDestination(), newValue);
 
-    this.getScheduler().schedule(this.getNodeId(), bestNextNode.getId(), packetToProcess);
+    ctx.schedule(this.getNodeId(), bestNextNode.getId(), packetToProcess);
   }
 
   private static class QTable {

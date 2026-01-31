@@ -105,9 +105,10 @@ public final class ObserverHubFactory {
   }
 
   private static Path resolveOutputDir(SimulationConfigContext simCfg) {
-    String base =
-        Optional.ofNullable(simCfg.general().outputFolder()).orElse(FileUtils.RESULTS_FILE_NAME);
-    String name = Optional.ofNullable(simCfg.general().experimentName()).orElse("results");
+    String base = Optional.ofNullable(simCfg.general().outputFolder()).orElse("results");
+    String name =
+        Optional.ofNullable(simCfg.general().experimentName()).orElse(FileUtils.RESULTS_FILE_NAME);
+
     return Paths.get(base).resolve(name);
   }
 }
