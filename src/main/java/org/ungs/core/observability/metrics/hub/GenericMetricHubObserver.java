@@ -58,7 +58,7 @@ public final class GenericMetricHubObserver implements SimulationObserver {
   @Override
   public void onSimulationEnd(SimulationRuntimeContext ctx) {
     for (MetricBundle<?> b0 : bundles) {
-      renderComparisonIfAny(b0);
+      if (ctx.getConfig().general().algorithms().size() > 1) renderComparisonIfAny(b0);
     }
   }
 
