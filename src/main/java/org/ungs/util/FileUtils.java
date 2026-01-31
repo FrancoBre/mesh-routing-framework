@@ -6,21 +6,33 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @UtilityClass
 public class FileUtils {
 
-  public static final String RESULTS_FILE_NAME;
+  private static volatile String RESULTS_FILE_NAME;
 
-  static {
+  /**
+   * Returns the current results folder or generates the next one if not set.
+   *
+   * @return the path to the results folder as a String
+   */
+  public static String getOrGenerateNextResultsFolder() {
+    if (RESULTS_FILE_NAME != null) {
+      return RESULTS_FILE_NAME;
+    }
     try {
-      RESULTS_FILE_NAME = FileUtils.getNextResultsFolder();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+      RESULTS_FILE_NAME = generateNextResultsFolder();
+      return RESULTS_FILE_NAME;
+    } catch (Exception ex) {
+      log.error("Error generating results folder", ex);
+      return System.getProperty("user.dir");
     }
   }
 
-  public static String getNextResultsFolder() throws IOException {
+  private static String generateNextResultsFolder() throws IOException {
     Path resultsDir = Paths.get(System.getProperty("user.dir"), "results");
     Files.createDirectories(resultsDir);
 
@@ -39,7 +51,7 @@ public class FileUtils {
       }
     }
 
-    String folderName = String.valueOf((maxNumber + 1));
+    String folderName = String.valueOf(maxNumber + 1);
     Path newFolder = resultsDir.resolve(folderName);
     Files.createDirectories(newFolder);
     return newFolder.toString();
