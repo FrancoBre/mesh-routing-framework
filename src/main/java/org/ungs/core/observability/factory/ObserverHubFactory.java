@@ -108,6 +108,7 @@ public final class ObserverHubFactory {
     String base = Optional.ofNullable(simCfg.general().outputFolder()).orElse("results");
     String name =
         Optional.ofNullable(simCfg.general().experimentName())
+            .filter(s -> !s.isBlank())
             .orElseGet(FileUtils::getOrGenerateNextResultsFolder);
 
     return Paths.get(base).resolve(name);
