@@ -16,15 +16,13 @@ public final class RouteFramesOutputObserver implements SimulationObserver {
 
   private final Network network;
   private final Path outDir;
-  private final long sampleEveryTicks;
   private final List<HopEvent> receivedHops = new ArrayList<>();
 
   private final RouteFrameRenderer renderer = new RouteFrameRenderer();
 
-  public RouteFramesOutputObserver(Network network, Path outDir, long sampleEveryTicks) {
+  public RouteFramesOutputObserver(Network network, Path outDir) {
     this.network = network;
     this.outDir = outDir;
-    this.sampleEveryTicks = Math.max(1, sampleEveryTicks);
   }
 
   @Override
