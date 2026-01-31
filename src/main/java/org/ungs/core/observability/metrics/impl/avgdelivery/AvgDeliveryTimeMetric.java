@@ -43,9 +43,7 @@ public final class AvgDeliveryTimeMetric
 
       double avg =
           deliveredPackets.stream()
-              .mapToDouble(
-                  (Packet p) ->
-                      p.getArrivalTime() - p.getDepartureTime()) // FIXME: esto creo que está mal
+              .mapToDouble((Packet p) -> p.getArrivalTime() - p.getDepartureTime())
               .average()
               .orElse(0.0);
 

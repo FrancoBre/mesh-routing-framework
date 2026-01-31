@@ -36,7 +36,6 @@ public final class RouteFramesOutputObserver implements SimulationObserver {
 
     if (e instanceof TickEvent t) {
       long tick = (long) ctx.getTick();
-      if (tick % sampleEveryTicks != 0) return;
 
       AlgorithmType algo = t.algorithm();
       List<HopEvent> hopsThisTick =
