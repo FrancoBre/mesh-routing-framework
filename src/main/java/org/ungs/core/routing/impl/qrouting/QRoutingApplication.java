@@ -57,6 +57,17 @@ public class QRoutingApplication extends RoutingApplication {
 
     var neighbors = new ArrayList<>(this.getNode().getNeighbors());
     neighbors.sort(Comparator.comparing(n -> n.getId().value()));
+
+    // If node is isolated (no neighbors), drop the packet
+    if (neighbors.isEmpty()) {
+      log.warn(
+          "[nodeId={}, time={}]: Packet {} dropped - node is isolated (no neighbors)",
+          this.getNodeId(),
+          ctx.getTick(),
+          packetToProcess.getId());
+      return;
+    }
+
     List<Double> qValues = new ArrayList<>();
 
     for (Node neighbor : neighbors) {
@@ -99,13 +110,18 @@ public class QRoutingApplication extends RoutingApplication {
     var nextNodeApp = (QRoutingApplication) nextNode.getApplication();
     double minNextQ = Double.MAX_VALUE;
 
-    for (Node neighborOfNext : nextNode.getNeighbors()) {
-      double qVal =
-          nextNodeApp
-              .getQTable()
-              .get(nextNode.getId(), neighborOfNext.getId(), packetToProcess.getDestination());
-      if (qVal < minNextQ) {
-        minNextQ = qVal;
+    if (nextNode.getNeighbors().isEmpty()) {
+      // Next node is isolated, use 0 as estimate (destination unreachable)
+      minNextQ = 0.0;
+    } else {
+      for (Node neighborOfNext : nextNode.getNeighbors()) {
+        double qVal =
+            nextNodeApp
+                .getQTable()
+                .get(nextNode.getId(), neighborOfNext.getId(), packetToProcess.getDestination());
+        if (qVal < minNextQ) {
+          minNextQ = qVal;
+        }
       }
     }
 

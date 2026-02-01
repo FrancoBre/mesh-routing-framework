@@ -8,6 +8,7 @@ import org.ungs.core.dynamics.api.NetworkDynamics;
 import org.ungs.core.dynamics.api.NetworkDynamicsType;
 import org.ungs.core.dynamics.presets.NetworkDynamicsPreset;
 import org.ungs.core.dynamics.presets.NoOpDynamicsPreset;
+import org.ungs.core.dynamics.presets.ScheduledLinkFailuresDynamicsPreset;
 
 @UtilityClass
 public final class NetworkDynamicsFactory {
@@ -17,6 +18,7 @@ public final class NetworkDynamicsFactory {
 
   static {
     register(new NoOpDynamicsPreset());
+    register(new ScheduledLinkFailuresDynamicsPreset());
     // register(new NodeFailuresDynamicsPreset()); TODO
   }
 

@@ -48,6 +48,8 @@ public final class SimulationEngine {
 
       network.setRuntimeContext(ctx);
 
+      dynamics.reset(ctx);
+
       installRoutingApps(algorithm);
 
       observers.onAlgorithmStart(ctx);

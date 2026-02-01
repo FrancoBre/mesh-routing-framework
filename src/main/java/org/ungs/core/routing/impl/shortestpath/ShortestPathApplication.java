@@ -55,6 +55,16 @@ public class ShortestPathApplication extends RoutingApplication implements Topol
     var neighbors = new ArrayList<>(this.getNode().getNeighbors());
     neighbors.sort(Comparator.comparing(n -> n.getId().value()));
 
+    // If node is isolated (no neighbors), drop the packet
+    if (neighbors.isEmpty()) {
+      log.warn(
+          "[nodeId={}, time={}]: Packet {} dropped - node is isolated (no neighbors)",
+          this.getNodeId(),
+          ctx.getTick(),
+          packetToProcess.getId());
+      return;
+    }
+
     int bestDist = Integer.MAX_VALUE;
     List<Node> bestCandidates = new ArrayList<>();
 
