@@ -197,6 +197,18 @@ public interface SimulationConfigLoader extends Config, Accessible {
   @Separator(",")
   List<String> injectionFixedLoadStepBatchSizes();
 
+  @Key("injection-schedule.minL")
+  @DefaultValue("0.0")
+  double injectionMinL();
+
+  @Key("injection-schedule.maxL")
+  @DefaultValue("3.5")
+  double injectionMaxL();
+
+  @Key("injection-schedule.load-level-change.period-ticks")
+  @DefaultValue("20000")
+  int injectionLoadLevelChangePeriodTicks();
+
   // -----------------------
   // PAIR SELECTION
   // -----------------------
