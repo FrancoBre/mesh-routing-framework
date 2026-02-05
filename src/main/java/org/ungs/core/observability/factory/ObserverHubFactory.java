@@ -20,6 +20,8 @@ import org.ungs.core.observability.metrics.api.MetricPreset;
 import org.ungs.core.observability.metrics.api.MetricType;
 import org.ungs.core.observability.metrics.hub.GenericMetricHubObserver;
 import org.ungs.core.observability.metrics.impl.avgdelivery.AvgDeliveryTimePreset;
+import org.ungs.core.observability.metrics.impl.loadvsavg.AvgDeliveryTimeVsLoadLevelPreset;
+import org.ungs.core.observability.metrics.impl.loadvsavgvstick.AvgDeliveryTimeVsLoadVsTickPreset;
 import org.ungs.core.observability.output.api.OutputBundle;
 import org.ungs.core.observability.output.api.OutputPreset;
 import org.ungs.core.observability.output.api.OutputType;
@@ -40,6 +42,8 @@ public final class ObserverHubFactory {
 
   static {
     registerMetric(new AvgDeliveryTimePreset());
+    registerMetric(new AvgDeliveryTimeVsLoadLevelPreset());
+    registerMetric(new AvgDeliveryTimeVsLoadVsTickPreset());
 
     registerOutput(new HeatmapOutputPreset());
     registerOutput(new GifRouteOutputPreset());

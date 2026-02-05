@@ -4,14 +4,7 @@ import java.util.List;
 import org.ungs.cli.SimulationConfigLoader;
 import org.ungs.core.traffic.schedule.InjectionScheduleType;
 
-public sealed interface InjectionScheduleConfig
-    permits InjectionScheduleConfig.LoadLevel,
-        InjectionScheduleConfig.ProbPerTick,
-        InjectionScheduleConfig.Gap,
-        InjectionScheduleConfig.WindowedLoad,
-        InjectionScheduleConfig.PlateauThenLinear,
-        InjectionScheduleConfig.PlateauRampPlateau,
-        InjectionScheduleConfig.FixedLoadStep {
+public interface InjectionScheduleConfig {
 
   InjectionScheduleType type();
 
@@ -19,6 +12,22 @@ public sealed interface InjectionScheduleConfig
     @Override
     public InjectionScheduleType type() {
       return InjectionScheduleType.LOAD_LEVEL;
+    }
+  }
+
+  record TriangularLoadLevel(double minL, double maxL, long periodTicks)
+      implements InjectionScheduleConfig {
+    @Override
+    public InjectionScheduleType type() {
+      return InjectionScheduleType.TRIANGULAR_LOAD_LEVEL;
+    }
+  }
+
+  record LinearLoadLevel(double minL, double maxL, long periodTicks)
+      implements InjectionScheduleConfig {
+    @Override
+    public InjectionScheduleType type() {
+      return InjectionScheduleType.LINEAR_LOAD_LEVEL;
     }
   }
 
@@ -153,6 +162,34 @@ public sealed interface InjectionScheduleConfig
             l.injectionFixedLoadStepStepTicks(),
             l.injectionFixedLoadStepInjectEveryNTicks(),
             batchSizes);
+      }
+      case TRIANGULAR_LOAD_LEVEL -> {
+        double minL = l.injectionMinL();
+        double maxL = l.injectionMaxL();
+        long periodTicks = l.injectionLoadLevelChangePeriodTicks();
+
+        if (minL < 0.0)
+          throw new IllegalArgumentException("traffic-schedule.triangular.minL must be >= 0");
+        if (maxL < 0.0)
+          throw new IllegalArgumentException("traffic-schedule.triangular.maxL must be >= 0");
+        if (maxL < minL)
+          throw new IllegalArgumentException("traffic-schedule.triangular.maxL must be >= minL");
+        if (periodTicks <= 0) periodTicks = l.terminationFixedTicksTotalTicks();
+
+        yield new TriangularLoadLevel(minL, maxL, periodTicks);
+      }
+      case LINEAR_LOAD_LEVEL -> {
+        double minL = l.injectionMinL();
+        double maxL = l.injectionMaxL();
+        long periodTicks = l.injectionLoadLevelChangePeriodTicks();
+
+        if (minL < 0.0) throw new IllegalArgumentException("injection-schedule.minL must be >= 0");
+        if (maxL < 0.0) throw new IllegalArgumentException("injection-schedule.maxL must be >= 0");
+        if (maxL < minL)
+          throw new IllegalArgumentException("injection-schedule.maxL must be >= minL");
+        if (periodTicks <= 0) periodTicks = l.terminationFixedTicksTotalTicks();
+
+        yield new LinearLoadLevel(minL, maxL, periodTicks);
       }
     };
   }
