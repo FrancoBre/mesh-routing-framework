@@ -8,6 +8,7 @@ import org.ungs.core.dynamics.api.NetworkDynamics;
 import org.ungs.core.engine.SimulationRuntimeContext;
 import org.ungs.core.network.Network;
 import org.ungs.core.network.Node;
+import org.ungs.core.observability.api.SimulationObserver;
 
 /**
  * Implements scheduled link disconnection/reconnection dynamics.
@@ -18,7 +19,7 @@ import org.ungs.core.network.Node;
  * <p>Links are disconnected at a specified tick and optionally reconnected at a later tick.
  */
 @Slf4j
-public final class ScheduledLinkFailuresDynamics implements NetworkDynamics {
+public final class ScheduledLinkFailuresDynamics implements NetworkDynamics, SimulationObserver {
 
   private final int disconnectAtTick;
   private final int reconnectAtTick;
@@ -34,19 +35,19 @@ public final class ScheduledLinkFailuresDynamics implements NetworkDynamics {
   }
 
   @Override
-  public void reset(SimulationRuntimeContext ctx) {
-    // Restore links if they were disconnected in a previous algorithm run
+  public void onAlgorithmEnd(SimulationRuntimeContext ctx) {
+    // Restore links if they were disconnected during this algorithm run
     if (disconnected) {
       Network network = ctx.getNetwork();
       for (LinkSpec link : links) {
         reconnectLink(network, link.nodeA(), link.nodeB());
       }
       log.info(
-          "[Reset] Restored {} link(s) for new algorithm run: {}",
+          "[Algorithm End] Restored {} link(s) for next algorithm run: {}",
           links.size(),
           formatLinks(links));
     }
-    // Reset internal state
+    // Reset internal state for next algorithm
     disconnected = false;
     reconnected = false;
   }

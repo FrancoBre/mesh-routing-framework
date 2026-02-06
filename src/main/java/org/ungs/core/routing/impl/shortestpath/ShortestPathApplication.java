@@ -55,13 +55,14 @@ public class ShortestPathApplication extends RoutingApplication implements Topol
     var neighbors = new ArrayList<>(this.getNode().getNeighbors());
     neighbors.sort(Comparator.comparing(n -> n.getId().value()));
 
-    // If node is isolated (no neighbors), drop the packet
+    // If node is isolated (no neighbors), return packet to queue to wait for reconnection
     if (neighbors.isEmpty()) {
       log.warn(
-          "[nodeId={}, time={}]: Packet {} dropped - node is isolated (no neighbors)",
+          "[nodeId={}, time={}]: Node is isolated - packet {} returned to queue",
           this.getNodeId(),
           ctx.getTick(),
           packetToProcess.getId());
+      this.getNode().getQueue().addFirst(packetToProcess);
       return;
     }
 
