@@ -33,8 +33,8 @@ public final class SimulationEngine {
 
     this.terminationPolicy = TerminationPolicyFactory.from(cfg.termination());
     this.trafficInjector = TrafficFactory.from(cfg, network);
-    this.observers = ObserverHubFactory.from(cfg, network);
     this.dynamics = NetworkDynamicsFactory.from(cfg.dynamics());
+    this.observers = ObserverHubFactory.from(cfg, network, dynamics);
   }
 
   public void run() {

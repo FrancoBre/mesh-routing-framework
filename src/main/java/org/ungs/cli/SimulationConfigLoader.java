@@ -271,6 +271,20 @@ public interface SimulationConfigLoader extends Config, Accessible {
   @DefaultValue("2000")
   int nodeFailuresMeanUptimeTicks();
 
+  // Scheduled Link Failures
+  @Key("network-dynamics.scheduled-link-failures.disconnect-at-tick")
+  @DefaultValue("5000")
+  int scheduledLinkFailuresDisconnectAtTick();
+
+  @Key("network-dynamics.scheduled-link-failures.reconnect-at-tick")
+  @DefaultValue("0")
+  int scheduledLinkFailuresReconnectAtTick();
+
+  @Key("network-dynamics.scheduled-link-failures.links")
+  @DefaultValue("")
+  @Separator(",")
+  List<String> scheduledLinkFailuresLinks();
+
   // -----------------------
   // METRICS / OUTPUTS
   // -----------------------
