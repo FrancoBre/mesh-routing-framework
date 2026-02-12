@@ -26,6 +26,7 @@ import org.ungs.core.observability.output.api.OutputType;
 import org.ungs.core.observability.output.impl.ConfigDumpOutputPreset;
 import org.ungs.core.observability.output.impl.GifRouteOutputPreset;
 import org.ungs.core.observability.output.impl.HeatmapOutputPreset;
+import org.ungs.core.observability.output.impl.QTableHeatmapOutputPreset;
 import org.ungs.core.observability.output.impl.RouteFramesOutputPreset;
 import org.ungs.core.observability.route.RouteRecorderObserver;
 import org.ungs.util.FileUtils;
@@ -45,6 +46,7 @@ public final class ObserverHubFactory {
     registerOutput(new GifRouteOutputPreset());
     registerOutput(new RouteFramesOutputPreset());
     registerOutput(new ConfigDumpOutputPreset());
+    registerOutput(new QTableHeatmapOutputPreset());
   }
 
   private static void registerOutput(OutputPreset preset) {

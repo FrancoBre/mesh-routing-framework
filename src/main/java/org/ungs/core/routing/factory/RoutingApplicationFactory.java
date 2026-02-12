@@ -2,6 +2,7 @@ package org.ungs.core.routing.factory;
 
 import java.util.EnumMap;
 import java.util.Map;
+import org.ungs.core.engine.SimulationRuntimeContext;
 import org.ungs.core.network.Node;
 import org.ungs.core.routing.api.AlgorithmType;
 import org.ungs.core.routing.api.RoutingApplication;
@@ -33,7 +34,8 @@ public final class RoutingApplicationFactory {
     return preset;
   }
 
-  public static RoutingApplication createRoutingApplication(AlgorithmType type, Node node) {
-    return getPreset(type).createRoutingApplication(node);
+  public static RoutingApplication createRoutingApplication(
+      AlgorithmType type, Node node, SimulationRuntimeContext ctx) {
+    return getPreset(type).createRoutingApplication(node, ctx);
   }
 }

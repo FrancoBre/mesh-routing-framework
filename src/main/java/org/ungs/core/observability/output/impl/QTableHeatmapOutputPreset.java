@@ -8,17 +8,18 @@ import org.ungs.core.observability.output.api.OutputPreset;
 import org.ungs.core.observability.output.api.OutputType;
 import org.ungs.core.observability.route.RouteRecorderObserver;
 
-public final class HeatmapOutputPreset implements OutputPreset {
+public final class QTableHeatmapOutputPreset implements OutputPreset {
 
   @Override
   public OutputType type() {
-    return OutputType.HEAT_MAP;
+    return OutputType.Q_TABLE_HEATMAP;
   }
 
   @Override
   public OutputBundle createBundle(
       SimulationConfigContext simCfg, Network network, RouteRecorderObserver route, Path outDir) {
+
     return new OutputBundle(
-        OutputType.HEAT_MAP.name(), new RouteHeatmapOutputObserver(network, route, outDir));
+        OutputType.Q_TABLE_HEATMAP.name(), new QTableHeatmapObserver(network, outDir));
   }
 }
