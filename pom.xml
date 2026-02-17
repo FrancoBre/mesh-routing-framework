@@ -29,12 +29,11 @@
             <artifactId>owner</artifactId>
             <version>1.0.12</version>
         </dependency>
-        <dependency>
+<dependency>
             <groupId>org.apache.commons</groupId>
-            <artifactId>commons-configuration2</artifactId>
-            <version>2.12.0</version>
-        </dependency>
-        <dependency>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.20.0</version>
+        </dependency>        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-math3</artifactId>
             <version>3.6.1</version>
@@ -47,7 +46,8 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.5.6</version>
+            <version>1.5.32</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -83,6 +83,82 @@
                     <execution>
                         <goals>
                             <goal>apply</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.12</version>
+                <configuration>
+                    <excludes>
+                        <exclude>**/cli/Main.class</exclude>
+                        
+                        <exclude>**/AlgorithmType.class</exclude>
+                        <exclude>**/CompositeMode.class</exclude>
+                        <exclude>**/ExportType.class</exclude>
+                        <exclude>**/InjectionScheduleType.class</exclude>
+                        <exclude>**/MetricType.class</exclude>
+                        <exclude>**/NetworkDynamicsType.class</exclude>
+                        <exclude>**/OutputType.class</exclude>
+                        <exclude>**/PairSelectionType.class</exclude>
+                        <exclude>**/TerminationPolicyType.class</exclude>
+                        <exclude>**/TopologyType.class</exclude>
+                        
+                        <exclude>**/config/GeneralConfig.class</exclude>
+                        <exclude>**/config/GroupsConfig.class</exclude>
+                        <exclude>**/config/ObservabilityConfig.class</exclude>
+                        <exclude>**/config/PairConstraintsConfig.class</exclude>
+                        <exclude>**/config/TrafficConfig.class</exclude>
+                        
+                        <exclude>**/config/InjectionScheduleConfig.class</exclude>
+                        <exclude>**/config/NetworkDynamicsConfig.class</exclude>
+                        <exclude>**/config/PairSelectionConfig.class</exclude>
+                        <exclude>**/config/TerminationConfig.class</exclude>
+                        
+                        <exclude>**/traffic/pairs/NodePair.class</exclude>
+                        <exclude>**/traffic/runtime/TrafficBuildContext.class</exclude>
+                        <exclude>**/metrics/api/MetricBundle.class</exclude>
+                        
+                        <exclude>**/observability/events/*Event.class</exclude>
+                        
+                        <exclude>**/observability/api/SimulationEvent.class</exclude>
+                        <exclude>**/observability/api/SimulationObserver.class</exclude>
+                        <exclude>**/traffic/pairs/PairConstraint.class</exclude>
+                        <exclude>**/traffic/pairs/PairSelector.class</exclude>
+                        <exclude>**/traffic/schedule/InjectionSchedule.class</exclude>
+                        <exclude>**/dynamics/api/NetworkDynamics.class</exclude>
+                        <exclude>**/topology/api/TopologyListener.class</exclude>
+                        <exclude>**/termination/api/TerminationPolicy.class</exclude>
+                        <exclude>**/metrics/api/Metric.class</exclude>
+                        <exclude>**/metrics/api/MetricRenderer.class</exclude>
+                        <exclude>**/metrics/api/ComparisonRenderer.class</exclude>
+                        
+                        <exclude>**/presets/*Preset.class</exclude>
+                        <exclude>**/api/*Preset.class</exclude>
+                        
+                        <exclude>**/output/impl/*OutputObserver.class</exclude>
+                        <exclude>**/output/impl/*OutputPreset.class</exclude>
+                        <exclude>**/output/api/OutputBundle.class</exclude>
+                        
+                        <exclude>**/output/render/*.class</exclude>
+                        
+                        <exclude>**/cli/SimulationConfigLoader.class</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
                         </goals>
                     </execution>
                 </executions>

@@ -34,15 +34,9 @@ public sealed interface NetworkDynamicsConfig
    * @param links list of link specifications in format "nodeA-nodeB" (e.g., "8-9", "14-15")
    */
   record ScheduledLinkFailures(
-      @com.fasterxml.jackson.annotation.JsonProperty(
-              "disconnect_at_tick")
-          int disconnectAtTick,
-      @com.fasterxml.jackson.annotation.JsonProperty(
-              "reconnect_at_tick")
-          int reconnectAtTick,
-      @com.fasterxml.jackson.annotation.JsonProperty(
-              "links")
-          List<LinkSpec> links)
+      @com.fasterxml.jackson.annotation.JsonProperty("disconnect_at_tick") int disconnectAtTick,
+      @com.fasterxml.jackson.annotation.JsonProperty("reconnect_at_tick") int reconnectAtTick,
+      @com.fasterxml.jackson.annotation.JsonProperty("links") List<LinkSpec> links)
       implements NetworkDynamicsConfig {
     @Override
     public NetworkDynamicsType type() {

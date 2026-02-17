@@ -154,7 +154,7 @@ public class QRoutingApplication extends RoutingApplication {
     ctx.schedule(this.getNodeId(), bestNextNode.getId(), packetToProcess);
   }
 
-  private static class QTable {
+  public static class QTable {
 
     @Getter private final Set<QValue> qValues;
 
@@ -206,7 +206,7 @@ public class QRoutingApplication extends RoutingApplication {
 
   @Getter
   @AllArgsConstructor
-  private static class QValue {
+  public static class QValue {
 
     private final Node.Id from;
     private final Node.Id to;
