@@ -1,7 +1,3 @@
-# Descripción Formal de la Arquitectura del MeshRouting Framework
-
-## Resumen
-
 El presente documento describe la arquitectura de software del **MeshRouting Framework**, un sistema de simulación de eventos discretos diseñado para el análisis comparativo de algoritmos de enrutamiento en redes de malla (*mesh networks*). El framework implementa un modelo de simulación basado en ticks temporales que permite evaluar el comportamiento de diferentes estrategias de enrutamiento bajo condiciones controladas de tráfico y topología de red.
 
 ---
