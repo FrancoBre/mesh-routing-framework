@@ -9,11 +9,20 @@ A simulation framework for comparing network routing algorithms (Q-Routing, Dijk
 
 This framework enables experimentation with adaptive routing algorithms in mesh networks. It implements a tick-based discrete event simulation that models packet queuing, transmission delays, and network congestion.
 
+The simulation conditions are based on the experiments from Boyan & Littman's 1994 paper *"Packet Routing in Dynamically Changing Networks: A Reinforcement Learning Approach"*:
+
+- **Incremental network load** — increasing packet injection causes congestion on certain paths
+- **Constant transmission time** — the focus is on queue processing delays at each node, not link latency
+- **Same conditions for all algorithms** — enables fair, direct comparison
+
+The architecture is modular and extensible: new routing algorithms, metrics, topologies, and traffic patterns can be added without modifying the core simulation engine.
+
 **Key features:**
-- Compare multiple routing algorithms side-by-side
-- Configurable network topologies (irregular grids, hypercubes, etc.)
-- Flexible traffic injection schedules (load levels, windowed, ramp, triangular, etc.)
+- Compare multiple routing algorithms side-by-side under identical conditions
+- Configurable network topologies (irregular grids, hypercubes, LATA networks)
+- Flexible traffic injection schedules (constant, ramping, oscillating, segmented)
 - Extensible metrics and visualization system
+- Tick-based simulation (no threads) for deterministic, reproducible experiments
 
 ## Quick Start
 
@@ -34,12 +43,19 @@ java -cp target/meshroutingframework-1.0-SNAPSHOT.jar org.ungs.cli.Main
 make run
 ```
 
+### Pre-run Experiments
+
+The `results/` folder contains experiments already run under various configurations, implementing the experiments from Boyan & Littman's paper. You can explore these to see example outputs (heatmaps, delivery time charts, comparisons) or use their configurations as templates for your own experiments.
+
 ## Supported Algorithms
 
 | Algorithm | Description |
 |-----------|-------------|
 | **Q-Routing** | Reinforcement learning approach that learns optimal routes by updating Q-values based on delivery feedback |
 | **Shortest-Path** | Dijkstra's algorithm - computes static shortest paths from each node to all destinations |
+| **Full-Echo Q-Routing** | Q-Routing variant that requests Q-table info from neighbors *(planned)* |
+
+The framework is designed for easy addition of new routing algorithms. Full-Echo Q-Routing is a candidate for testing the second experiment from Boyan & Littman's paper (link disconnection scenarios).
 
 ## Configuration
 
@@ -68,6 +84,44 @@ flowchart LR
 ```
 
 The framework runs the same simulation once per algorithm, allowing direct comparison under identical conditions.
+
+---
+
+### Lifecycle Hooks & Event System
+
+To enable extensibility, the simulation implements **lifecycle hooks** and an **event sink** that components can use to react to simulation state changes.
+
+**Lifecycle Hooks** (`SimulationObserver` interface):
+
+| Hook | When it fires | Example use case |
+|------|---------------|------------------|
+| `onSimulationStart` | Once, before any algorithm runs | Initialize shared resources |
+| `onAlgorithmStart` | Before each algorithm's run begins | Reset metric accumulators, clear routing tables |
+| `onAlgorithmEnd` | After each algorithm's run completes | Save collected data series, render per-algorithm charts |
+| `onSimulationEnd` | Once, after all algorithms finish | Generate comparison charts across algorithms |
+
+**Event Sink** (`EventSink` interface):
+
+Components can listen to fine-grained events emitted during simulation via `onEvent()`:
+
+| Event | Description |
+|-------|-------------|
+| `TickEvent` | A simulation tick occurred |
+| `PacketDepartedEvent` | A packet was injected into the network |
+| `HopEvent` | A packet moved from one node to another |
+| `PacketDeliveredEvent` | A packet reached its destination |
+| `LoadLevelUpdatedEvent` | The injection load level changed |
+
+**Context Objects:**
+
+Components receive context objects to access simulation state and configuration:
+
+| Context | Type | Description |
+|---------|------|-------------|
+| `SimulationConfigContext` | Static | Experiment configuration loaded from CLI/properties file. Contains topology, algorithms, termination policy, traffic settings, etc. Immutable — does not change during simulation. Used to build all components for the experiment. |
+| `SimulationRuntimeContext` | Dynamic | Current simulation state. Contains current tick, RNG, network reference, current algorithm, in-flight packets, delivered packets, event sink. Updated every tick. Passed to hooks and event handlers for calculations. Reset between algorithm runs. |
+
+This architecture allows metrics, visualizers, and routing applications to hook into any part of the simulation lifecycle without coupling to the core engine.
 
 ---
 
@@ -115,34 +169,9 @@ outputs=HEAT_MAP,CONFIG_DUMP
 
 Defines the network structure: nodes and their connections.
 
-```mermaid
-graph TB
-    subgraph grid["6x6 GRID TOPOLOGY (36 nodes)"]
-        %% Row 0
-        n0((0)) --- n1((1)) --- n2((2)) --- n3((3)) --- n4((4)) --- n5((5))
-        %% Row 1
-        n6((6)) --- n7((7)) --- n8((8)) --- n9((9)) --- n10((10)) --- n11((11))
-        %% Row 2
-        n12((12)) --- n13((13)) --- n14((14)) --- n15((15)) --- n16((16)) --- n17((17))
-        %% Row 3
-        n18((18)) --- n19((19)) --- n20((20)) --- n21((21)) --- n22((22)) --- n23((23))
-        %% Row 4
-        n24((24)) --- n25((25)) --- n26((26)) --- n27((27)) --- n28((28)) --- n29((29))
-        %% Row 5
-        n30((30)) --- n31((31)) --- n32((32)) --- n33((33)) --- n34((34)) --- n35((35))
-        %% Vertical connections
-        n0 --- n6 --- n12 --- n18 --- n24 --- n30
-        n1 --- n7 --- n13 --- n19 --- n25 --- n31
-        n2 --- n8 --- n14 --- n20 --- n26 --- n32
-        n3 --- n9 --- n15 --- n21 --- n27 --- n33
-        n4 --- n10 --- n16 --- n22 --- n28 --- n34
-        n5 --- n11 --- n17 --- n23 --- n29 --- n35
-    end
-```
-
 | Topology | Description |
 |----------|-------------|
-| `_6X6_GRID` | 36-node grid with 4-connectivity (above) |
+| `_6X6_GRID` | 36-node irregular grid with 4-connectivity (from Boyan & Littman 1994) |
 | `_7_HYPERCUBE` | 128-node 7-dimensional hypercube *(TODO)* |
 | `_116_NODE_LATA` | 116-node LATA telephone network *(TODO)* |
 | `FILE` | Load from external file *(TODO)* |
@@ -531,23 +560,65 @@ flowchart TD
 
 ### Core Components
 
-- **SimulationEngine** - Manages the tick-based event loop, initializes network topology, and coordinates packet injection
-- **Network** - Represents the topology with nodes and links
-- **Node** - Maintains a packet queue and delegates routing decisions to its `RoutingApplication`
-- **RoutingApplication** - Abstract base class for routing algorithms
-- **Registry** - Singleton that logs all simulation events (sends, receives, queue states)
-- **Metrics** - Computes statistics from Registry data (avg delivery time, etc.)
-- **GraphGenerator** - Creates comparative visualizations (heatmaps, charts)
+- **SimulationEngine** — Manages the tick-based event loop, initializes network topology, and coordinates packet injection. The tick system processes events (packet send/receive, queue updates) in discrete steps, avoiding thread synchronization issues.
+- **Network** — Represents the topology: nodes and links. Provides methods for sending packets between nodes.
+- **Node** — Maintains a packet queue and delegates routing decisions to its `RoutingApplication`.
+- **RoutingApplication** — Abstract base class for routing algorithms. Each node has one application instance that decides the next hop for each packet.
+- **Registry** — Singleton that logs all simulation events (sends, receives, delivery times, queue states). Called from relevant parts of the code to record events.
+- **Metrics** — Computes statistics from Registry data (avg delivery time, throughput, etc.). Metrics are configurable to allow future extensions.
+- **GraphGenerator** — Creates comparative visualizations (heatmaps, delivery time charts). Uses XChart library.
+
+### Algorithm Implementations
+
+**QRoutingApplication:**
+- Maintains a Q-table to make routing decisions
+- Updates Q-values based on feedback from packet deliveries (reinforcement learning)
+- Selects the next hop based on learned Q-values
+
+**ShortestPathApplication:**
+- Computes shortest paths from the node to all destinations using Dijkstra's algorithm
+- Selects the next hop based on precomputed routes
+- Recomputes routes when topology changes (implements `TopologyListener`)
 
 ## Extending the Framework
 
+All pluggable components follow a unified **Factory → Preset → Type** pattern:
+
+```mermaid
+flowchart LR
+    Type["<b>Type</b><br/>(enum value)"] --> Preset["<b>Preset</b><br/>(creates instances)"] --> Factory["<b>Factory</b><br/>(registry)"]
+```
+
+| Component | Type Enum | Preset Interface | Factory |
+|-----------|-----------|------------------|---------|
+| Routing Algorithm | `AlgorithmType` | `RoutingApplicationPreset` | `RoutingApplicationFactory` |
+| Metric | `MetricType` | `MetricPreset<T>` | `ObserverHubFactory` |
+| Output | `OutputType` | `OutputPreset` | `ObserverHubFactory` |
+| Injection Schedule | `InjectionScheduleType` | `InjectionSchedulePreset` | `InjectionScheduleFactory` |
+| Pair Selector | `PairSelectionType` | `PairSelectorPreset` | `PairSelectorFactory` |
+| Termination Policy | `TerminationPolicyType` | `TerminationPolicyPreset` | `TerminationPolicyFactory` |
+| Network Dynamics | `NetworkDynamicsType` | `NetworkDynamicsPreset` | `NetworkDynamicsFactory` |
+| Topology | `TopologyType` | `TopologyPreset` | `TopologyFactory` |
+
+---
+
 ### Adding a New Routing Algorithm
 
-1. Create a class extending `RoutingApplication`
-2. Implement `onTick()` with your routing logic
-3. Add a new `AlgorithmType` enum value
-4. Create a `RoutingApplicationPreset` and register it in `RoutingApplicationFactory`
+1. Add a new value to `AlgorithmType` enum
+2. Create your `RoutingApplication` implementation
+3. Create a `RoutingApplicationPreset` that instantiates it
+4. Register the preset in `RoutingApplicationFactory`
 
+**Step 1: Add enum value** (`AlgorithmType.java`)
+```java
+public enum AlgorithmType {
+    Q_ROUTING,
+    SHORTEST_PATH,
+    MY_CUSTOM  // ← add this
+}
+```
+
+**Step 2: Create the application** (`MyCustomApplication.java`)
 ```java
 public class MyCustomApplication extends RoutingApplication {
 
@@ -570,9 +641,107 @@ public class MyCustomApplication extends RoutingApplication {
 }
 ```
 
-### Adding New Metrics
+**Step 3: Create the preset** (`MyCustomApplicationPreset.java`)
+```java
+public class MyCustomApplicationPreset implements RoutingApplicationPreset {
 
-Implement the `Metric` interface and register it with the metrics system.
+    @Override
+    public AlgorithmType type() {
+        return AlgorithmType.MY_CUSTOM;
+    }
+
+    @Override
+    public RoutingApplication createRoutingApplication(Node node) {
+        return new MyCustomApplication(node);
+    }
+}
+```
+
+**Step 4: Register in factory** (`RoutingApplicationFactory.java`)
+```java
+static {
+    register(new QRoutingApplicationPreset());
+    register(new ShortestPathApplicationPreset());
+    register(new MyCustomApplicationPreset());  // ← add this
+}
+```
+
+---
+
+### Adding a New Metric
+
+1. Add a new value to `MetricType` enum
+2. Create your `Metric<T>` implementation (collects data via events)
+3. Create renderer(s) for per-algorithm and comparison charts
+4. Create a `MetricPreset<T>` that bundles them together
+5. Register the preset in `ObserverHubFactory`
+
+**Step 1: Add enum value** (`MetricType.java`)
+```java
+public enum MetricType {
+    AVG_DELIVERY_TIME,
+    AVG_DELIVERY_TIME_VS_LOAD_LEVEL,
+    MY_CUSTOM_METRIC  // ← add this
+}
+```
+
+**Step 2: Create the metric** (`MyCustomMetric.java`)
+```java
+public class MyCustomMetric implements Metric<MyDataType> {
+
+    @Override
+    public void reset() {
+        // Called on algorithm start - clear accumulated data
+    }
+
+    @Override
+    public void onEvent(SimulationEvent e, SimulationRuntimeContext ctx) {
+        // Called for each event - collect data
+        if (e instanceof PacketDeliveredEvent delivered) {
+            // record delivery time, etc.
+        }
+    }
+
+    @Override
+    public MyDataType snapshot() {
+        // Called on algorithm end - return collected data
+        return collectedData;
+    }
+}
+```
+
+**Step 3: Create the preset** (`MyCustomMetricPreset.java`)
+```java
+public class MyCustomMetricPreset implements MetricPreset<MyDataType> {
+
+    @Override
+    public MetricType type() {
+        return MetricType.MY_CUSTOM_METRIC;
+    }
+
+    @Override
+    public MetricBundle<MyDataType> createBundle(SimulationConfigContext cfg, Network network) {
+        var metric = new MyCustomMetric();
+        var perAlgoRenderer = new MyCustomRenderer();
+        var comparisonRenderer = new MyCustomComparisonRenderer();
+        
+        return new MetricBundle<>(
+            MetricType.MY_CUSTOM_METRIC.name(),
+            metric,
+            perAlgoRenderer,
+            comparisonRenderer
+        );
+    }
+}
+```
+
+**Step 4: Register in factory** (`ObserverHubFactory.java`)
+```java
+static {
+    registerMetric(new AvgDeliveryTimePreset());
+    registerMetric(new MyCustomMetricPreset());  // ← add this
+}
+```
 
 ## References
 
