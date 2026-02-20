@@ -64,10 +64,7 @@ public final class ScheduledLinkFailuresDynamics implements NetworkDynamics, Sim
       }
       disconnected = true;
       log.info(
-          "[Tick {}] Disconnected {} link(s): {}",
-          currentTick,
-          links.size(),
-          formatLinks(links));
+          "[Tick {}] Disconnected {} link(s): {}", currentTick, links.size(), formatLinks(links));
     }
 
     // Reconnect links at the specified tick (if configured)
@@ -77,10 +74,7 @@ public final class ScheduledLinkFailuresDynamics implements NetworkDynamics, Sim
       }
       reconnected = true;
       log.info(
-          "[Tick {}] Reconnected {} link(s): {}",
-          currentTick,
-          links.size(),
-          formatLinks(links));
+          "[Tick {}] Reconnected {} link(s): {}", currentTick, links.size(), formatLinks(links));
     }
   }
 
