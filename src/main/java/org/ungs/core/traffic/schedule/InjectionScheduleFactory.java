@@ -19,6 +19,7 @@ public final class InjectionScheduleFactory {
     register(new FixedLoadStepSchedulePreset());
     register(new TriangularLoadSchedulePreset());
     register(new LinearLoadSchedulePreset());
+    register(new SegmentwiseLoadLevelSchedulePreset());
   }
 
   private static void register(InjectionSchedulePreset preset) {

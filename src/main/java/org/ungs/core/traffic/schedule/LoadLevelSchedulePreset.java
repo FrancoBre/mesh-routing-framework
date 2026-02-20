@@ -27,7 +27,7 @@ public final class LoadLevelSchedulePreset implements InjectionSchedulePreset {
       ctx.getEventSink()
           .emit(
               new LoadLevelUpdatedEvent(
-                  ctx.getTick(), L, LoadLevelUpdatedEvent.LoadLevelTrend.STABLE));
+                  ctx.getTick(), L, LoadLevelUpdatedEvent.LoadLevelTrend.PLATEAU));
       return inject;
     };
   }

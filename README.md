@@ -1,93 +1,145 @@
-# Especificación General
+# Mesh Routing Framework
 
-## Objetivo del framework
-Permitir realizar experimentos de red para comparar algoritmos como Q-Routing y algoritmos shortest-path en diferentes topologías y condiciones de red.
+A simulation framework for comparing network routing algorithms (Q-Routing, Dijkstra's Shortest-Path, etc.) across different topologies and network conditions.
 
-## Condiciones de red
-Las condiciones de red serían, en principio aquellas expuestas en el primer experimento del paper "Q-Routing: A Reinforcement Learning Approach to Adaptive Routing in Dynamic Networks" de Boyan y Littman, es decir:
+![Java](https://img.shields.io/badge/java-21-orange.svg)
+![Maven](https://img.shields.io/badge/maven-3.x-blue.svg)
 
-- Carga de red incremental (cantidad creciente de paquetes queriendo ser entregados al mismo tiempo, lo que provoca que algunos caminos se congestionen).
-- El tiempo de transmisión entre nodos es un tiempo constante de unidades enteras, ya que el foco del algoritmo está en el tiempo incremental de procesamiento de los paquetes en las colas de cada nodo, que aumenta junto con la carga de red.
+## Overview
 
-El segundo experimento del paper, que incluye desconexión manual de enlaces, y envío de paquetes "pendular" en la grilla, no será implementado en esta primera versión del framework, pero la arquitectura del código debe permitir su inclusión en el futuro.
+This framework enables experimentation with adaptive routing algorithms in mesh networks. It implements a tick-based discrete event simulation that models packet queuing, transmission delays, and network congestion.
 
-## Métricas
-La métrica a medir sería principalmente el tiempo promedio de entrega de paquetes, con la posibilidad de extender a otras métricas como el throughput o la cantidad de paquetes entregados en un tiempo determinado. Estas métricas van a ser configurables para permitir la inclusión de nuevas métricas en el futuro.
+**Key features:**
+- Compare multiple routing algorithms side-by-side
+- Configurable network topologies (irregular grids, hypercubes, etc.)
+- Flexible traffic injection schedules (load levels, windowed, ramp, triangular, etc.)
+- Extensible metrics and visualization system
 
-Con estas métricas se van a generar gráficos comparativos entre los diferentes algoritmos de routing bajo las mismas condiciones de red y topologías. La cantidad y tipo de gráficos también van a ser escalable y configurable.
+## Quick Start
 
-## Algoritmos soportados
-El framework debe permitir la inclusión de diferentes algoritmos de routing. En principio, se van a implementar los siguientes algoritmos:
-- Q-Routing
-- Shortest-Path (Dijkstra)
+**Prerequisites:** Java 21+, Maven 3.x
 
-Con estos dos algoritmos se podrán realizar comparaciones iniciales. El framework debe permitir la inclusión de nuevos algoritmos de routing en el futuro, por lo que la arquitectura del código debe ser modular y extensible.
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/meshroutingframework.git
+cd meshroutingframework
 
-Un candidato, con el que se podría probar el segundo experimento del paper, es la variante full-echo de Q-Routing, que incluye la solicitud de información de las tablas Q de los nodos vecinos.
+# Build
+mvn clean package
 
-# Especificación de Clases
+# Run simulation
+java -cp target/meshroutingframework-1.0-SNAPSHOT.jar org.ungs.cli.Main
 
-## Main
-Parsea los parámetros de entrada, que en principio van a ser:
-- Topología de red (6x6 irregular grid, 7 hypercube, 116-node LATA telephone network, etc).
-- Algoritmos de routing a comparar (Q-Routing, Shortest-Path, etc).
-- Cantidad de paquetes a enviar.
-- Tiempo entre cada paquete.
-- Métricas a medir.
-- Generación de gráficos (sí/no, cuáles).
+# Or use the Makefile
+make run
+```
 
-Estos parámetros se pueden pasar por línea de comandos o por un archivo de configuración, y se van a encapsular en un record SimulationConfig para facilitar su manejo.
+## Supported Algorithms
 
-## Simulation
-- Inicializa la topología de red, los nodos y los enlaces según la configuración recibida.
-- Crea los paquetes y los envía a la red según los parámetros de tiempo especificados, por cada algoritmo de routing a comparar.
-- Implementa el sistema de ticks para simular el paso del tiempo en la red, procesando los eventos en cada tick (envío y recepción de paquetes, actualización de colas, etc). Esto nos previene de usar hilos y facilita la simulación.
+| Algorithm | Description |
+|-----------|-------------|
+| **Q-Routing** | Reinforcement learning approach that learns optimal routes by updating Q-values based on delivery feedback |
+| **Shortest-Path** | Dijkstra's algorithm - computes static shortest paths from each node to all destinations |
 
-## Registry
-- Lleva un registro de todos los eventos que ocurren en la simulación (envío y recepción de paquetes, tiempos de entrega, estados de las colas, etc).
-- Proporciona métodos para consultar estos datos y calcular las métricas solicitadas.
-- Se llama desde partes relevantes del código para registrar eventos.
-- Implementa un singleton para asegurar que todas las partes del código acceden al mismo registro.
+## Configuration
 
-## Metrics
-- Define una interfaz para las métricas a medir (tiempo promedio de entrega, throughput, etc).
-- Implementa las métricas solicitadas en la configuración.
-- Proporciona métodos para calcular y devolver los resultados de las métricas basándose en los datos del Registry.
+All simulation parameters are defined in `src/main/resources/application.properties`:
 
-## GraphGenerator
-- Toma los resultados de las métricas y genera gráficos comparativos.
-- Utiliza una biblioteca de gráficos para crear visualizaciones claras y comparativas entre los algoritmos
+```properties
+# Topology: _6X6_GRID, _7_HYPERCUBE, _116_NODE_LATA
+topology=_6X6_GRID
 
-## Network
-- Representa la topología de red, incluyendo nodos y enlaces.
-- Proporciona métodos para enviar paquetes entre nodos.
+# Algorithms to compare (runs one simulation per algorithm)
+algorithms=Q_ROUTING,SHORTEST_PATH
 
-## Node
-- Representa un nodo en la red.
-- Mantiene una cola de paquetes a procesar.
-- Tiene una aplicación que implementa el algoritmo de routing asignado (Q-Routing, Shortest-Path, etc).
-- Proporciona interfaces para recibir paquetes, procesarlos y enviarlos al siguiente nodo, que van a ser implementadas por las aplicaciones de routing.
+# Traffic injection schedule
+injection-schedule=LOAD_LEVEL
+injection-schedule.load-level.L=0.5
 
-## Application
-- Define una interfaz para las aplicaciones de routing.
-- Implementa los métodos necesarios para procesar paquetes y decidir el siguiente salto basado en el algoritmo de routing.
+# Termination policy
+termination-policy=FIXED_TICKS
+termination-policy.fixed-ticks.total-ticks=50000
 
-## QRoutingApplication
-- Implementa el algoritmo Q-Routing.
-- Mantiene una tabla Q para tomar decisiones de routing.
-- Actualiza la tabla Q basándose en las recompensas recibidas por la entrega de paquetes
-- Implementa la lógica para seleccionar el siguiente salto basándose en la tabla Q.
+# Metrics to collect
+metrics=AVG_DELIVERY_TIME,AVG_DELIVERY_TIME_VS_LOAD_LEVEL_VS_TICK
 
-## ShortestPathApplication
-- Implementa el algoritmo Shortest-Path (Dijkstra).
-- Calcula las rutas más cortas desde el nodo a todos los demás nodos en la red.
-- Selecciona el siguiente salto basándose en las rutas calculadas.
+# Outputs
+outputs=HEAT_MAP,CONFIG_DUMP
+```
 
-# Cosas para extender a futuro
-- Implementar más algoritmos de routing.
-- Incluir más condiciones de red, como enlaces que se desconectan o tiempos de transmisión variables.
-- Agregar más métricas para evaluar el rendimiento de los algoritmos.
-- Agregar estrategias de envío de paquetes incrementales (gaps variables) o basadas en patrones de tráfico específicos (origen y destino variables).
-- Agregar cálculo de latencia de envío entre nodos basados en distancias (habría que agregar time in flight a los paquetes, ya no sería 1 por tick).
-- Agregar variaciones en la posición de los nodos en la topología (por ejemplo, nodos móviles).
-- Agregar un tiempo máximo o hops máximos para la entrega de paquetes, para evitar que queden "perdidos" en la red indefinidamente.
+### Injection Schedules
+
+| Schedule | Description |
+|----------|-------------|
+| `LOAD_LEVEL` | Constant average load L per tick |
+| `TRIANGULAR_LOAD_LEVEL` | Load varies triangularly between min/max over a period |
+| `LINEAR_LOAD_LEVEL` | Load varies linearly between min/max |
+| `WINDOWED_LOAD` | Multiphase fixed batch sizes (A → B → C) |
+| `PLATEAU_RAMP_PLATEAU` | Plateau → ramp → plateau pattern |
+| `FIXED_LOAD_STEP` | Stepwise batch levels every N ticks |
+
+## Architecture
+
+```mermaid
+flowchart TD
+    Main --> Simulation
+    Simulation --> Network
+    Simulation --> Registry
+    Network --> Nodes
+    Registry --> Metrics
+    Nodes --> RoutingApplication
+    Metrics --> GraphGenerator
+    
+    RoutingApplication -.- QRouting[QRoutingApplication]
+    RoutingApplication -.- ShortestPath[ShortestPathApplication]
+```
+
+### Core Components
+
+- **SimulationEngine** - Manages the tick-based event loop, initializes network topology, and coordinates packet injection
+- **Network** - Represents the topology with nodes and links
+- **Node** - Maintains a packet queue and delegates routing decisions to its `RoutingApplication`
+- **RoutingApplication** - Abstract base class for routing algorithms
+- **Registry** - Singleton that logs all simulation events (sends, receives, queue states)
+- **Metrics** - Computes statistics from Registry data (avg delivery time, etc.)
+- **GraphGenerator** - Creates comparative visualizations (heatmaps, charts)
+
+## Extending the Framework
+
+### Adding a New Routing Algorithm
+
+1. Create a class extending `RoutingApplication`
+2. Implement `onTick()` with your routing logic
+3. Add a new `AlgorithmType` enum value
+4. Create a `RoutingApplicationPreset` and register it in `RoutingApplicationFactory`
+
+```java
+public class MyCustomApplication extends RoutingApplication {
+
+    public MyCustomApplication(Node node) {
+        super(node);
+    }
+
+    @Override
+    public AlgorithmType getType() {
+        return AlgorithmType.MY_CUSTOM;
+    }
+
+    @Override
+    public void onTick(SimulationRuntimeContext ctx) {
+        getNextPacket().ifPresent(packet -> {
+            Node.Id nextHop = decideNextHop(packet);
+            getNode().send(packet, nextHop);
+        });
+    }
+}
+```
+
+### Adding New Metrics
+
+Implement the `Metric` interface and register it with the metrics system.
+
+## References
+
+Based on the experiments from:
+> Boyan, J. A., & Littman, M. L. (1994). *Packet Routing in Dynamically Changing Networks: A Reinforcement Learning Approach*

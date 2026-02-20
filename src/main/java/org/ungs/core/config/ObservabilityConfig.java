@@ -8,13 +8,18 @@ import static org.ungs.core.traffic.schedule.InjectionScheduleType.LOAD_LEVEL;
 import static org.ungs.core.traffic.schedule.InjectionScheduleType.TRIANGULAR_LOAD_LEVEL;
 
 import java.util.List;
+import java.util.OptionalLong;
 import org.ungs.cli.SimulationConfigLoader;
 import org.ungs.core.observability.metrics.api.MetricType;
 import org.ungs.core.observability.output.api.OutputType;
 import org.ungs.core.traffic.schedule.InjectionScheduleType;
 
 public record ObservabilityConfig(
-    List<MetricType> metrics, List<OutputType> outputs, int outputSampleEveryTicks) {
+    List<MetricType> metrics,
+    List<OutputType> outputs,
+    int outputSampleEveryTicks,
+    long heatmapFromTick,
+    OptionalLong heatmapToTick) {
 
   public static ObservabilityConfig fromLoader(SimulationConfigLoader l) {
     List<MetricType> metrics = SimulationConfigContext.parseEnumList(l.metrics(), MetricType.class);
@@ -43,6 +48,26 @@ public record ObservabilityConfig(
       throw new IllegalArgumentException(
           "GIF_ROUTE output requires ROUTE_FRAMES output to be enabled");
 
-    return new ObservabilityConfig(metrics, outputs, sampleEvery);
+    long heatmapFromTick = l.heatmapFromTick();
+    if (heatmapFromTick < 0) {
+      throw new IllegalArgumentException("output.heatmap.from-tick must be >= 0");
+    }
+
+    OptionalLong heatmapToTick = parseOptionalLong(l.heatmapToTick());
+    if (heatmapToTick.isPresent() && heatmapToTick.getAsLong() <= heatmapFromTick) {
+      throw new IllegalArgumentException(
+          "output.heatmap.to-tick must be > output.heatmap.from-tick when set");
+    }
+
+    return new ObservabilityConfig(metrics, outputs, sampleEvery, heatmapFromTick, heatmapToTick);
+  }
+
+  private static OptionalLong parseOptionalLong(String s) {
+    if (s == null || s.isBlank()) return OptionalLong.empty();
+    try {
+      return OptionalLong.of(Long.parseLong(s.trim()));
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("Invalid long value: " + s);
+    }
   }
 }

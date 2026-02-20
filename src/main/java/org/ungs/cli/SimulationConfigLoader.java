@@ -209,6 +209,10 @@ public interface SimulationConfigLoader extends Config, Accessible {
   @DefaultValue("20000")
   int injectionLoadLevelChangePeriodTicks();
 
+  @Key("injection-schedule.segmentwise.segments")
+  @DefaultValue("")
+  String injectionSegmentwiseSegments();
+
   // -----------------------
   // PAIR SELECTION
   // -----------------------
@@ -300,4 +304,12 @@ public interface SimulationConfigLoader extends Config, Accessible {
   @Key("output.sample-every-ticks")
   @DefaultValue("1")
   int outputSampleEveryTicks();
+
+  @Key("output.heatmap.from-tick")
+  @DefaultValue("0")
+  long heatmapFromTick();
+
+  @Key("output.heatmap.to-tick")
+  @DefaultValue("")
+  String heatmapToTick();
 }

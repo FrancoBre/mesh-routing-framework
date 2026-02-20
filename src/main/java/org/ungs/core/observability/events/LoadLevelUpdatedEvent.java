@@ -7,13 +7,13 @@ public record LoadLevelUpdatedEvent(double tick, double loadLevel, LoadLevelTren
 
   public LoadLevelUpdatedEvent {
     if (trend == null) {
-      trend = LoadLevelTrend.STABLE;
+      trend = LoadLevelTrend.PLATEAU;
     }
   }
 
   public enum LoadLevelTrend {
     RISING,
     FALLING,
-    STABLE
+    PLATEAU
   }
 }
