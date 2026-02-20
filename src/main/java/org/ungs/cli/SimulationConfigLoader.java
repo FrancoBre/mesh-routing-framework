@@ -197,6 +197,22 @@ public interface SimulationConfigLoader extends Config, Accessible {
   @Separator(",")
   List<String> injectionFixedLoadStepBatchSizes();
 
+  @Key("injection-schedule.minL")
+  @DefaultValue("0.0")
+  double injectionMinL();
+
+  @Key("injection-schedule.maxL")
+  @DefaultValue("3.5")
+  double injectionMaxL();
+
+  @Key("injection-schedule.load-level-change.period-ticks")
+  @DefaultValue("20000")
+  int injectionLoadLevelChangePeriodTicks();
+
+  @Key("injection-schedule.segmentwise.segments")
+  @DefaultValue("")
+  String injectionSegmentwiseSegments();
+
   // -----------------------
   // PAIR SELECTION
   // -----------------------
@@ -271,6 +287,20 @@ public interface SimulationConfigLoader extends Config, Accessible {
   @DefaultValue("2000")
   int nodeFailuresMeanUptimeTicks();
 
+  // Scheduled Link Failures
+  @Key("network-dynamics.scheduled-link-failures.disconnect-at-tick")
+  @DefaultValue("5000")
+  int scheduledLinkFailuresDisconnectAtTick();
+
+  @Key("network-dynamics.scheduled-link-failures.reconnect-at-tick")
+  @DefaultValue("0")
+  int scheduledLinkFailuresReconnectAtTick();
+
+  @Key("network-dynamics.scheduled-link-failures.links")
+  @DefaultValue("")
+  @Separator(",")
+  List<String> scheduledLinkFailuresLinks();
+
   // -----------------------
   // METRICS / OUTPUTS
   // -----------------------
@@ -288,4 +318,12 @@ public interface SimulationConfigLoader extends Config, Accessible {
   @Key("output.sample-every-ticks")
   @DefaultValue("1")
   int outputSampleEveryTicks();
+
+  @Key("output.heatmap.from-tick")
+  @DefaultValue("0")
+  long heatmapFromTick();
+
+  @Key("output.heatmap.to-tick")
+  @DefaultValue("")
+  String heatmapToTick();
 }

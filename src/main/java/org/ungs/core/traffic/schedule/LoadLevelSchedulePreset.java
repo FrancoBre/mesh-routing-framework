@@ -1,6 +1,7 @@
 package org.ungs.core.traffic.schedule;
 
 import org.ungs.core.config.InjectionScheduleConfig;
+import org.ungs.core.observability.events.LoadLevelUpdatedEvent;
 
 public final class LoadLevelSchedulePreset implements InjectionSchedulePreset {
 
@@ -22,6 +23,11 @@ public final class LoadLevelSchedulePreset implements InjectionSchedulePreset {
       if (frac > 0.0) {
         if (ctx.getRng().nextUnitDouble() < frac) inject += 1;
       }
+
+      ctx.getEventSink()
+          .emit(
+              new LoadLevelUpdatedEvent(
+                  ctx.getTick(), L, LoadLevelUpdatedEvent.LoadLevelTrend.PLATEAU));
       return inject;
     };
   }

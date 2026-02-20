@@ -10,6 +10,7 @@ import java.util.Optional;
 import lombok.NoArgsConstructor;
 import org.ungs.core.config.ObservabilityConfig;
 import org.ungs.core.config.SimulationConfigContext;
+import org.ungs.core.dynamics.api.NetworkDynamics;
 import org.ungs.core.network.Network;
 import org.ungs.core.observability.api.CompositeObserverHub;
 import org.ungs.core.observability.api.NoOpObserverHub;
@@ -20,6 +21,8 @@ import org.ungs.core.observability.metrics.api.MetricPreset;
 import org.ungs.core.observability.metrics.api.MetricType;
 import org.ungs.core.observability.metrics.hub.GenericMetricHubObserver;
 import org.ungs.core.observability.metrics.impl.avgdelivery.AvgDeliveryTimePreset;
+import org.ungs.core.observability.metrics.impl.loadvsavg.AvgDeliveryTimeVsLoadLevelPreset;
+import org.ungs.core.observability.metrics.impl.loadvsavgvstick.AvgDeliveryTimeVsLoadVsTickPreset;
 import org.ungs.core.observability.output.api.OutputBundle;
 import org.ungs.core.observability.output.api.OutputPreset;
 import org.ungs.core.observability.output.api.OutputType;
@@ -41,6 +44,8 @@ public final class ObserverHubFactory {
 
   static {
     registerMetric(new AvgDeliveryTimePreset());
+    registerMetric(new AvgDeliveryTimeVsLoadLevelPreset());
+    registerMetric(new AvgDeliveryTimeVsLoadVsTickPreset());
 
     registerOutput(new HeatmapOutputPreset());
     registerOutput(new GifRouteOutputPreset());
@@ -57,7 +62,8 @@ public final class ObserverHubFactory {
     METRIC_REGISTRY.put(preset.type(), preset);
   }
 
-  public static ObserverHub from(SimulationConfigContext simCfg, Network network) {
+  public static ObserverHub from(
+      SimulationConfigContext simCfg, Network network, NetworkDynamics dynamics) {
     ObservabilityConfig cfg = simCfg.observability();
 
     boolean noOutputs = cfg.outputs() == null || cfg.outputs().isEmpty();
@@ -65,6 +71,10 @@ public final class ObserverHubFactory {
     if (noOutputs && noMetrics) return NoOpObserverHub.INSTANCE;
 
     List<SimulationObserver> obs = new ArrayList<>();
+
+    if (dynamics instanceof SimulationObserver dynamicsObserver) {
+      obs.add(dynamicsObserver);
+    }
 
     RouteRecorderObserver route = new RouteRecorderObserver();
     obs.add(route);

@@ -2,10 +2,8 @@ package org.ungs.core.routing.impl.qrouting;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,7 +11,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.ungs.core.engine.SimulationRuntimeContext;
 import org.ungs.core.network.Node;
-import org.ungs.core.observability.api.QTableSnapshotEvent;
 import org.ungs.core.observability.events.PacketDeliveredEvent;
 import org.ungs.core.routing.api.AlgorithmType;
 import org.ungs.core.routing.api.RoutingApplication;
@@ -21,7 +18,7 @@ import org.ungs.core.routing.api.RoutingApplication;
 @Slf4j
 public class QRoutingApplication extends RoutingApplication {
 
-  private static final double ETA = 0.5; // learning rate
+  private static final double ETA = 0.7; // learning rate
   private static final double EPSILON_EQ_TOL = 1e-6; // for comparing doubles (not exploration)
   private static final double STEP_TIME = 1.0;
   private static final double INITIAL_Q = 2000.0;
@@ -68,6 +65,18 @@ public class QRoutingApplication extends RoutingApplication {
 
     var neighbors = new ArrayList<>(this.getNode().getNeighbors());
     neighbors.sort(Comparator.comparing(n -> n.getId().value()));
+
+    // If node is isolated (no neighbors), return packet to queue to wait for reconnection
+    if (neighbors.isEmpty()) {
+      log.warn(
+          "[nodeId={}, time={}]: Node is isolated - packet {} returned to queue",
+          this.getNodeId(),
+          ctx.getTick(),
+          packetToProcess.getId());
+      this.getNode().getQueue().addFirst(packetToProcess);
+      return;
+    }
+
     List<Double> qValues = new ArrayList<>();
 
     for (Node neighbor : neighbors) {
@@ -108,8 +117,20 @@ public class QRoutingApplication extends RoutingApplication {
     // next node's best estimate (min Q-value among its neighbors)
     Node nextNode = bestNextNode;
     var nextNodeApp = (QRoutingApplication) nextNode.getApplication();
-    double minNextQ = Double.MAX_VALUE;
 
+    // If next node is isolated, skip Q-value update (invalid information)
+    if (nextNode.getNeighbors().isEmpty()) {
+      log.warn(
+          "[nodeId={}, time={}]: Next node {} is isolated - skipping Q-update for packet {}",
+          this.getNodeId(),
+          ctx.getTick(),
+          nextNode.getId(),
+          packetToProcess.getId());
+      ctx.schedule(this.getNodeId(), bestNextNode.getId(), packetToProcess);
+      return;
+    }
+
+    double minNextQ = Double.MAX_VALUE;
     for (Node neighborOfNext : nextNode.getNeighbors()) {
       double qVal =
           nextNodeApp
@@ -141,18 +162,7 @@ public class QRoutingApplication extends RoutingApplication {
     ctx.schedule(this.getNodeId(), bestNextNode.getId(), packetToProcess);
   }
 
-  private void emitQSnapshot(SimulationRuntimeContext ctx, Node.Id destination) {
-    Map<Node.Id, Double> qMap = new HashMap<>();
-    for (Node n : getNode().getNeighbors()) {
-      double q = qTable.get(getNodeId(), n.getId(), destination);
-      qMap.put(n.getId(), q);
-    }
-
-    ctx.getEventSink()
-        .emit(new QTableSnapshotEvent(ctx.getTick(), getType(), getNodeId(), destination, qMap));
-  }
-
-  public static class QTable {
+    public static class QTable {
 
     @Getter private final Set<QValue> qValues;
 
@@ -204,7 +214,7 @@ public class QRoutingApplication extends RoutingApplication {
 
   @Getter
   @AllArgsConstructor
-  private static class QValue {
+  public static class QValue {
 
     private final Node.Id from;
     private final Node.Id to;
