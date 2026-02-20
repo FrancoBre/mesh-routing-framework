@@ -4,14 +4,7 @@ import java.util.List;
 import org.ungs.cli.SimulationConfigLoader;
 import org.ungs.core.traffic.schedule.InjectionScheduleType;
 
-public sealed interface InjectionScheduleConfig
-    permits InjectionScheduleConfig.LoadLevel,
-        InjectionScheduleConfig.ProbPerTick,
-        InjectionScheduleConfig.Gap,
-        InjectionScheduleConfig.WindowedLoad,
-        InjectionScheduleConfig.PlateauThenLinear,
-        InjectionScheduleConfig.PlateauRampPlateau,
-        InjectionScheduleConfig.FixedLoadStep {
+public interface InjectionScheduleConfig {
 
   InjectionScheduleType type();
 
@@ -85,6 +78,38 @@ public sealed interface InjectionScheduleConfig
     }
   }
 
+  record TriangularLoadLevel(double minL, double maxL, long periodTicks)
+      implements InjectionScheduleConfig {
+    @Override
+    public InjectionScheduleType type() {
+      return InjectionScheduleType.TRIANGULAR_LOAD_LEVEL;
+    }
+  }
+
+  record LinearLoadLevel(double minL, double maxL, long periodTicks)
+      implements InjectionScheduleConfig {
+    @Override
+    public InjectionScheduleType type() {
+      return InjectionScheduleType.LINEAR_LOAD_LEVEL;
+    }
+  }
+
+  record SegmentwiseLoadLevel(List<Segment> segments) implements InjectionScheduleConfig {
+
+    @Override
+    public InjectionScheduleType type() {
+      return InjectionScheduleType.SEGMENTWISE_LOAD_LEVEL;
+    }
+
+    public sealed interface Segment permits Plateau, Ramp {
+      long ticks();
+    }
+
+    public record Plateau(long ticks, double L) implements Segment {}
+
+    public record Ramp(long ticks, double fromL, double toL) implements Segment {}
+  }
+
   static InjectionScheduleConfig fromLoader(SimulationConfigLoader l) {
     InjectionScheduleType type =
         SimulationConfigContext.parseEnum(l.injectionSchedule(), InjectionScheduleType.class);
@@ -153,6 +178,58 @@ public sealed interface InjectionScheduleConfig
             l.injectionFixedLoadStepStepTicks(),
             l.injectionFixedLoadStepInjectEveryNTicks(),
             batchSizes);
+      }
+      case TRIANGULAR_LOAD_LEVEL -> {
+        double minL = l.injectionMinL();
+        double maxL = l.injectionMaxL();
+        long periodTicks = l.injectionLoadLevelChangePeriodTicks();
+
+        if (minL < 0.0)
+          throw new IllegalArgumentException("traffic-schedule.triangular.minL must be >= 0");
+        if (maxL < 0.0)
+          throw new IllegalArgumentException("traffic-schedule.triangular.maxL must be >= 0");
+        if (maxL < minL)
+          throw new IllegalArgumentException("traffic-schedule.triangular.maxL must be >= minL");
+        if (periodTicks <= 0) periodTicks = l.terminationFixedTicksTotalTicks();
+
+        yield new TriangularLoadLevel(minL, maxL, periodTicks);
+      }
+      case LINEAR_LOAD_LEVEL -> {
+        double minL = l.injectionMinL();
+        double maxL = l.injectionMaxL();
+        long periodTicks = l.injectionLoadLevelChangePeriodTicks();
+
+        if (minL < 0.0) throw new IllegalArgumentException("injection-schedule.minL must be >= 0");
+        if (maxL < 0.0) throw new IllegalArgumentException("injection-schedule.maxL must be >= 0");
+        if (maxL < minL)
+          throw new IllegalArgumentException("injection-schedule.maxL must be >= minL");
+        if (periodTicks <= 0) periodTicks = l.terminationFixedTicksTotalTicks();
+
+        yield new LinearLoadLevel(minL, maxL, periodTicks);
+      }
+      case SEGMENTWISE_LOAD_LEVEL -> {
+        String spec = l.injectionSegmentwiseSegments();
+        var segments = SegmentwiseParser.parse(spec);
+
+        // validations:
+        if (segments.isEmpty())
+          throw new IllegalArgumentException(
+              "injection-schedule.piecewise.segments must not be empty");
+
+        for (var s : segments) {
+          if (s.ticks() <= 0)
+            throw new IllegalArgumentException("piecewise segment ticks must be > 0");
+
+          if (s instanceof InjectionScheduleConfig.SegmentwiseLoadLevel.Plateau p) {
+            if (p.L() < 0.0) throw new IllegalArgumentException("piecewise plateau L must be >= 0");
+          } else {
+            var r = (InjectionScheduleConfig.SegmentwiseLoadLevel.Ramp) s;
+            if (r.fromL() < 0.0 || r.toL() < 0.0)
+              throw new IllegalArgumentException("piecewise ramp L must be >= 0");
+          }
+        }
+
+        yield new InjectionScheduleConfig.SegmentwiseLoadLevel(segments);
       }
     };
   }

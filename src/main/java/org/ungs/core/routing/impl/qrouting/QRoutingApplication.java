@@ -18,7 +18,7 @@ import org.ungs.core.routing.api.RoutingApplication;
 @Slf4j
 public class QRoutingApplication extends RoutingApplication {
 
-  private static final double ETA = 0.5; // learning rate
+  private static final double ETA = 0.7; // learning rate
   private static final double EPSILON_EQ_TOL = 1e-6; // for comparing doubles (not exploration)
   private static final double STEP_TIME = 1.0;
 
