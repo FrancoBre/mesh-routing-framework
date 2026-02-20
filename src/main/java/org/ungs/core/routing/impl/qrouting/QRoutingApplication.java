@@ -57,6 +57,18 @@ public class QRoutingApplication extends RoutingApplication {
 
     var neighbors = new ArrayList<>(this.getNode().getNeighbors());
     neighbors.sort(Comparator.comparing(n -> n.getId().value()));
+
+    // If node is isolated (no neighbors), return packet to queue to wait for reconnection
+    if (neighbors.isEmpty()) {
+      log.warn(
+          "[nodeId={}, time={}]: Node is isolated - packet {} returned to queue",
+          this.getNodeId(),
+          ctx.getTick(),
+          packetToProcess.getId());
+      this.getNode().getQueue().addFirst(packetToProcess);
+      return;
+    }
+
     List<Double> qValues = new ArrayList<>();
 
     for (Node neighbor : neighbors) {
@@ -97,8 +109,20 @@ public class QRoutingApplication extends RoutingApplication {
     // next node's best estimate (min Q-value among its neighbors)
     Node nextNode = bestNextNode;
     var nextNodeApp = (QRoutingApplication) nextNode.getApplication();
-    double minNextQ = Double.MAX_VALUE;
 
+    // If next node is isolated, skip Q-value update (invalid information)
+    if (nextNode.getNeighbors().isEmpty()) {
+      log.warn(
+          "[nodeId={}, time={}]: Next node {} is isolated - skipping Q-update for packet {}",
+          this.getNodeId(),
+          ctx.getTick(),
+          nextNode.getId(),
+          packetToProcess.getId());
+      ctx.schedule(this.getNodeId(), bestNextNode.getId(), packetToProcess);
+      return;
+    }
+
+    double minNextQ = Double.MAX_VALUE;
     for (Node neighborOfNext : nextNode.getNeighbors()) {
       double qVal =
           nextNodeApp
