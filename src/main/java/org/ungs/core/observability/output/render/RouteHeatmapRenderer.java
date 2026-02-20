@@ -5,10 +5,8 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.Polygon;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -17,30 +15,44 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.Set;
 import javax.imageio.ImageIO;
+import lombok.extern.slf4j.Slf4j;
 import org.ungs.core.network.Network;
 import org.ungs.core.network.Node;
-import org.ungs.core.network.Packet;
 import org.ungs.core.observability.events.HopEvent;
 import org.ungs.core.routing.api.AlgorithmType;
 
+@Slf4j
 public final class RouteHeatmapRenderer {
 
-  public void render(Network network, List<HopEvent> hops, AlgorithmType algorithm, Path outFile) {
+  public void render(
+      Network network,
+      List<HopEvent> hops,
+      AlgorithmType algorithm,
+      Path outFile,
+      long fromTick,
+      OptionalLong toTick) {
     Map<Node.Id, Point> pos = grid6x6Positions(network);
+
+    long upperBound = toTick.orElse(Long.MAX_VALUE);
 
     Map<EdgeKey, Integer> edgeCounts = new HashMap<>();
     for (HopEvent h : hops) {
       if (h.algorithm().equals(algorithm)) {
-        EdgeKey k = EdgeKey.undirected(h.from(), h.to());
-        edgeCounts.merge(k, 1, Integer::sum);
+        // Filter by tick range: sentTick >= fromTick && sentTick < toTick
+        long hopTick = h.sentTick();
+        if (hopTick >= fromTick && hopTick < upperBound) {
+          EdgeKey k = EdgeKey.undirected(h.from(), h.to());
+          edgeCounts.merge(k, 1, Integer::sum);
+        }
       }
     }
 
     int max = edgeCounts.values().stream().max(Integer::compareTo).orElse(1);
 
-    BufferedImage img = drawBase(network, pos, 1100, 900);
+    BufferedImage img = drawBase(network, pos);
     Graphics2D g = img.createGraphics();
     setup(g);
 
@@ -57,6 +69,9 @@ public final class RouteHeatmapRenderer {
       g.setColor(new Color(50, 90, 200, 160));
       g.drawLine(a.x, a.y, b.x, b.y);
     }
+
+    // Draw edge count labels on top of edges
+    drawEdgeLabels(g, pos, edgeCounts);
 
     drawNodes(network, pos, g);
     g.dispose();
@@ -90,14 +105,14 @@ public final class RouteHeatmapRenderer {
   }
 
   // ---------- drawing primitives ----------
-  private static BufferedImage drawBase(Network network, Map<Node.Id, Point> pos, int w, int h) {
-    BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+  private static BufferedImage drawBase(Network network, Map<Node.Id, Point> pos) {
+    BufferedImage img = new BufferedImage(1100, 900, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g = img.createGraphics();
     setup(g);
 
     // background
     g.setColor(Color.WHITE);
-    g.fillRect(0, 0, w, h);
+    g.fillRect(0, 0, 1100, 900);
 
     // draw all edges light
     g.setStroke(new BasicStroke(2f));
@@ -124,6 +139,56 @@ public final class RouteHeatmapRenderer {
     return img;
   }
 
+  private static void drawEdgeLabels(
+      Graphics2D g, Map<Node.Id, Point> pos, Map<EdgeKey, Integer> edgeCounts) {
+    g.setFont(new Font("SansSerif", Font.BOLD, 11));
+    var fm = g.getFontMetrics();
+
+    for (var e : edgeCounts.entrySet()) {
+      EdgeKey k = e.getKey();
+      int count = e.getValue();
+      if (count == 0) continue;
+
+      Point a = pos.get(k.a);
+      Point b = pos.get(k.b);
+      if (a == null || b == null) continue;
+
+      // Calculate midpoint of edge
+      int midX = (a.x + b.x) / 2;
+      int midY = (a.y + b.y) / 2;
+
+      // Offset slightly perpendicular to the edge to avoid overlap with the line
+      double dx = b.x - a.x;
+      double dy = b.y - a.y;
+      double len = Math.sqrt(dx * dx + dy * dy);
+      if (len > 0) {
+        // Perpendicular offset (10 pixels)
+        int offsetX = (int) (-dy / len * 12);
+        int offsetY = (int) (dx / len * 12);
+        midX += offsetX;
+        midY += offsetY;
+      }
+
+      String label = String.valueOf(count);
+      int textWidth = fm.stringWidth(label);
+      int textHeight = fm.getHeight();
+
+      // Draw white background rectangle for readability
+      g.setColor(new Color(255, 255, 255, 220));
+      g.fillRoundRect(
+          midX - textWidth / 2 - 3, midY - textHeight / 2 - 1, textWidth + 6, textHeight + 2, 4, 4);
+
+      // Draw black border
+      g.setColor(new Color(100, 100, 100));
+      g.drawRoundRect(
+          midX - textWidth / 2 - 3, midY - textHeight / 2 - 1, textWidth + 6, textHeight + 2, 4, 4);
+
+      // Draw the count text
+      g.setColor(new Color(30, 30, 30));
+      g.drawString(label, midX - textWidth / 2, midY + textHeight / 4);
+    }
+  }
+
   private static void drawNodes(Network network, Map<Node.Id, Point> pos, Graphics2D g) {
     g.setStroke(new BasicStroke(2f));
     for (Node n : network.getNodes()) {
@@ -142,60 +207,15 @@ public final class RouteHeatmapRenderer {
     }
   }
 
-  private static void drawArrowHead(Graphics2D g, Point a, Point b) {
-    double dx = b.x - a.x;
-    double dy = b.y - a.y;
-    double len = Math.sqrt(dx * dx + dy * dy);
-    if (len < 1e-6) return;
-
-    double ux = dx / len;
-    double uy = dy / len;
-
-    int arrowSize = 10;
-    int ax = (int) (b.x - ux * 18);
-    int ay = (int) (b.y - uy * 18);
-
-    int leftX = (int) (ax - uy * arrowSize);
-    int leftY = (int) (ay + ux * arrowSize);
-
-    int rightX = (int) (ax + uy * arrowSize);
-    int rightY = (int) (ay - ux * arrowSize);
-
-    Polygon tri = new Polygon(new int[] {b.x, leftX, rightX}, new int[] {b.y, leftY, rightY}, 3);
-    g.fillPolygon(tri);
-  }
-
   private static void setup(Graphics2D g) {
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.setRenderingHint(
         RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
   }
 
-  private static void write(BufferedImage img, String outFile) {
-    try {
-      ImageIO.write(img, "png", new File(outFile));
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to write image: " + outFile, e);
-    }
-  }
-
   private record EdgeKey(Node.Id a, Node.Id b) {
     static EdgeKey undirected(Node.Id x, Node.Id y) {
       return (x.value() <= y.value()) ? new EdgeKey(x, y) : new EdgeKey(y, x);
     }
-  }
-
-  private static Color colorForPacket(Packet packet) {
-    int id = packet.getId().value();
-
-    // hue ∈ [0,1), bien distribuido
-    float hue = (id * 0.61803398875f) % 1.0f; // golden ratio trick
-    float saturation = 0.85f;
-    float brightness = 0.95f;
-
-    Color base = Color.getHSBColor(hue, saturation, brightness);
-
-    // alpha para ver superposición
-    return new Color(base.getRed(), base.getGreen(), base.getBlue(), 200);
   }
 }
