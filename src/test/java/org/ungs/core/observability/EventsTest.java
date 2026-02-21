@@ -93,15 +93,12 @@ class EventsTest {
     @DisplayName("should store all fields correctly")
     void storesFieldsCorrectly() {
       Packet packet = new Packet(new Packet.Id(42), new Node.Id(0), new Node.Id(5));
-      int pathHopCount = 5;
       double receivedTime = 100.0;
       AlgorithmType algorithm = AlgorithmType.SHORTEST_PATH;
 
-      PacketDeliveredEvent event =
-          new PacketDeliveredEvent(packet, pathHopCount, receivedTime, algorithm);
+      PacketDeliveredEvent event = new PacketDeliveredEvent(packet, receivedTime, algorithm);
 
       assertSame(packet, event.packet());
-      assertEquals(pathHopCount, event.pathHopCount());
       assertEquals(receivedTime, event.receivedTime(), 0.001);
       assertEquals(algorithm, event.algorithm());
     }
@@ -110,25 +107,12 @@ class EventsTest {
     @DisplayName("should be immutable (record)")
     void isImmutable() {
       Packet packet = new Packet(new Packet.Id(1), new Node.Id(0), new Node.Id(5));
-      PacketDeliveredEvent event =
-          new PacketDeliveredEvent(packet, 3, 50.0, AlgorithmType.Q_ROUTING);
+      PacketDeliveredEvent event = new PacketDeliveredEvent(packet, 50.0, AlgorithmType.Q_ROUTING);
 
       PacketDeliveredEvent copy =
-          new PacketDeliveredEvent(
-              event.packet(), event.pathHopCount(), event.receivedTime(), event.algorithm());
+          new PacketDeliveredEvent(event.packet(), event.receivedTime(), event.algorithm());
 
       assertEquals(event.packet(), copy.packet());
-      assertEquals(event.pathHopCount(), copy.pathHopCount());
-    }
-
-    @Test
-    @DisplayName("should handle zero hop count")
-    void handlesZeroHopCount() {
-      Packet packet = new Packet(new Packet.Id(1), new Node.Id(0), new Node.Id(0));
-      PacketDeliveredEvent event =
-          new PacketDeliveredEvent(packet, 0, 10.0, AlgorithmType.Q_ROUTING);
-
-      assertEquals(0, event.pathHopCount());
     }
   }
 

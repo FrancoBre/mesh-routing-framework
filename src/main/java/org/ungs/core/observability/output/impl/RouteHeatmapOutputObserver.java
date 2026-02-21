@@ -11,7 +11,7 @@ import org.ungs.core.observability.output.render.RouteHeatmapRenderer;
 import org.ungs.core.observability.route.RouteRecorderObserver;
 import org.ungs.core.routing.api.AlgorithmType;
 
-public final class HeatmapOutputObserver implements SimulationObserver {
+public final class RouteHeatmapOutputObserver implements SimulationObserver {
 
   private final Network network;
   private final RouteRecorderObserver route;
@@ -20,7 +20,7 @@ public final class HeatmapOutputObserver implements SimulationObserver {
   private final OptionalLong toTick;
   private final RouteHeatmapRenderer renderer = new RouteHeatmapRenderer();
 
-  public HeatmapOutputObserver(
+  public RouteHeatmapOutputObserver(
       Network network,
       RouteRecorderObserver route,
       Path outDir,

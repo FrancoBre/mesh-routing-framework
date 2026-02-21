@@ -48,7 +48,7 @@ public class ShortestPathApplication extends RoutingApplication implements Topol
           packetToProcess.getId());
 
       ctx.getEventSink()
-          .emit(new PacketDeliveredEvent(packetToProcess, 0, ctx.getTick(), this.getType()));
+          .emit(new PacketDeliveredEvent(packetToProcess, ctx.getTick(), this.getType()));
       return;
     }
 

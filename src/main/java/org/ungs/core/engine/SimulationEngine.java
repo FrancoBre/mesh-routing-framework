@@ -48,7 +48,7 @@ public final class SimulationEngine {
 
       network.setRuntimeContext(ctx);
 
-      installRoutingApps(algorithm);
+      installRoutingApps(algorithm, ctx);
 
       observers.onAlgorithmStart(ctx);
 
@@ -71,10 +71,10 @@ public final class SimulationEngine {
     observers.onSimulationEnd(ctx);
   }
 
-  private void installRoutingApps(AlgorithmType algorithm) {
+  private void installRoutingApps(AlgorithmType algorithm, SimulationRuntimeContext ctx) {
     for (Node node : network.getNodes()) {
 
-      var app = RoutingApplicationFactory.createRoutingApplication(algorithm, node);
+      var app = RoutingApplicationFactory.createRoutingApplication(algorithm, node, ctx);
 
       node.installApplication(app);
 
@@ -95,8 +95,6 @@ public final class SimulationEngine {
     List<SimulationRuntimeContext.PendingSend> sendsThisTick = ctx.flushPendingSends();
 
     sendsThisTick.forEach((p) -> network.sendPacket(p.from(), p.to(), p.packet()));
-
-    ctx.advanceOneTick();
 
     ctx.getEventSink()
         .emit(

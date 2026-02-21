@@ -37,7 +37,7 @@ class QRoutingApplicationTest {
 
   private void installQRoutingApps() {
     for (Node node : network.getNodes()) {
-      node.installApplication(new QRoutingApplication(node));
+      node.installApplication(new QRoutingApplication(node, ctx));
       node.emptyQueue();
     }
   }
@@ -47,13 +47,19 @@ class QRoutingApplicationTest {
   class QTableInitialization {
 
     @Test
-    @DisplayName("should initialize Q-values to 0.0 by default")
-    void qTable_defaultsToZero() {
+    @DisplayName(
+        "should initialize Q-values to INITIAL_Q (2000.0) for all neighbor-destination pairs")
+    void qTable_initializesToInitialQ() {
       Node node = network.getNode(new Node.Id(0));
       QRoutingApplication app = (QRoutingApplication) node.getApplication();
 
-      // Q-table should be empty initially
-      assertTrue(app.getQTable().getQValues().isEmpty());
+      // Q-table should be initialized with entries for all neighbor-destination pairs
+      assertFalse(app.getQTable().getQValues().isEmpty());
+
+      // All initial Q-values should be 2000.0 (INITIAL_Q constant)
+      for (var qValue : app.getQTable().getQValues()) {
+        assertEquals(2000.0, qValue.getValue(), 0.01);
+      }
     }
   }
 
@@ -194,14 +200,15 @@ class QRoutingApplicationTest {
 
       QRoutingApplication app = (QRoutingApplication) node1.getApplication();
 
-      // Before routing
-      assertTrue(app.getQTable().getQValues().isEmpty());
+      // Before routing - Q-table is pre-initialized with INITIAL_Q (2000.0)
+      assertFalse(app.getQTable().getQValues().isEmpty());
 
       // Route packet
       app.onTick(ctx);
 
-      // After routing, Q-table should have an entry
+      // After routing, Q-table should still have entries and a packet should be scheduled
       assertFalse(app.getQTable().getQValues().isEmpty());
+      assertEquals(1, ctx.getPendingSends().size());
     }
 
     @Test
@@ -245,7 +252,7 @@ class QRoutingApplicationTest {
       isolatedNetwork.setRuntimeContext(ctx);
 
       Node isolatedNode = isolatedNetwork.getNode(new Node.Id(0));
-      isolatedNode.installApplication(new QRoutingApplication(isolatedNode));
+      isolatedNode.installApplication(new QRoutingApplication(isolatedNode, ctx));
 
       // This node has no neighbors
       Packet packet = new Packet(new Packet.Id(1), new Node.Id(0), new Node.Id(1));

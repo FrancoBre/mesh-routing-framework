@@ -1,5 +1,6 @@
 package org.ungs.core.routing.presets;
 
+import org.ungs.core.engine.SimulationRuntimeContext;
 import org.ungs.core.network.Node;
 import org.ungs.core.routing.api.AlgorithmType;
 import org.ungs.core.routing.api.RoutingApplication;
@@ -14,7 +15,7 @@ public final class ShortestPathApplicationPreset implements RoutingApplicationPr
   }
 
   @Override
-  public RoutingApplication createRoutingApplication(Node node) {
+  public RoutingApplication createRoutingApplication(Node node, SimulationRuntimeContext ctx) {
     return new ShortestPathApplication(node);
   }
 }
