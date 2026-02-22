@@ -21,8 +21,9 @@ public final class AvgDeliveryTimePreset implements MetricPreset<List<Tuple<Doub
       SimulationConfigContext simCfg, Network network) {
     long warmup = Optional.of(simCfg.general().warmupTicks()).orElse(0);
     int sampleEvery = Optional.of(simCfg.observability().outputSampleEveryTicks()).orElse(1);
+    int windowSize = simCfg.observability().metricWindowSize();
 
-    var metric = new AvgDeliveryTimeMetric(warmup, sampleEvery);
+    var metric = new AvgDeliveryTimeMetric(warmup, sampleEvery, windowSize);
 
     var perAlgoRenderer = new AvgDeliveryTimeRenderer();
     var comparisonRenderer = new AvgDeliveryTimeComparisonRenderer();

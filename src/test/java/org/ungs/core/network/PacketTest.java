@@ -81,6 +81,17 @@ class PacketTest {
       packet.incrementTimeInQueue();
       assertEquals(1.0, packet.getTimeInQueue(), 0.001);
     }
+
+    @Test
+    @DisplayName("should reset timeInQueue to 0")
+    void resetTimeInQueue_resetsToZero() {
+      Packet packet = new Packet(new Packet.Id(1), new Node.Id(0), new Node.Id(1));
+      packet.incrementTimeInQueue();
+      packet.incrementTimeInQueue();
+      assertEquals(2.0, packet.getTimeInQueue());
+      packet.resetTimeInQueue();
+      assertEquals(0.0, packet.getTimeInQueue());
+    }
   }
 
   @Nested

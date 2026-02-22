@@ -2,10 +2,8 @@ package org.ungs.core.routing.impl.fullecho;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,7 +11,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.ungs.core.engine.SimulationRuntimeContext;
 import org.ungs.core.network.Node;
-import org.ungs.core.observability.api.QTableSnapshotEvent;
 import org.ungs.core.observability.events.PacketDeliveredEvent;
 import org.ungs.core.routing.api.AlgorithmType;
 import org.ungs.core.routing.api.RoutingApplication;
@@ -21,7 +18,7 @@ import org.ungs.core.routing.api.RoutingApplication;
 @Slf4j
 public class FullEchoQRoutingApplication extends RoutingApplication {
 
-  private static final double ETA = 0.5; // learning rate
+  private static final double ETA = 0.7; // learning rate
   private static final double EPSILON_EQ_TOL = 1e-6; // tie tolerance
   private static final double STEP_TIME = 1.0;
   private static final double INITIAL_Q = 2000.0;
@@ -142,17 +139,6 @@ public class FullEchoQRoutingApplication extends RoutingApplication {
     }
 
     return (min == Double.MAX_VALUE) ? 0.0 : min;
-  }
-
-  private void emitQSnapshot(SimulationRuntimeContext ctx, Node.Id destination) {
-    Map<Node.Id, Double> qMap = new HashMap<>();
-    for (Node n : getNode().getNeighbors()) {
-      double q = qTable.get(getNodeId(), n.getId(), destination);
-      qMap.put(n.getId(), q);
-    }
-
-    ctx.getEventSink()
-        .emit(new QTableSnapshotEvent(ctx.getTick(), getType(), getNodeId(), destination, qMap));
   }
 
   public static class QTable {

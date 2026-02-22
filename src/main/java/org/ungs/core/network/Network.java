@@ -90,6 +90,7 @@ public class Network {
                 (long) (ctx.getTick() + 1),
                 ctx.getCurrentAlgorithm()));
 
+    packet.resetTimeInQueue();
     receiverNode.receivePacket(packet);
   }
 

@@ -326,4 +326,8 @@ public interface SimulationConfigLoader extends Config, Accessible {
   @Key("output.heatmap.to-tick")
   @DefaultValue("")
   String heatmapToTick();
+
+  @Key("metric.window-size")
+  @DefaultValue("0")
+  int metricWindowSize();
 }

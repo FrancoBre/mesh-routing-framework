@@ -446,7 +446,7 @@ class SimulationIntegrationTest {
 
     NetworkDynamicsConfig dynamics = new NetworkDynamicsConfig.None();
     ObservabilityConfig observability =
-        new ObservabilityConfig(List.of(), List.of(), 1, 0, OptionalLong.empty());
+        new ObservabilityConfig(List.of(), List.of(), 1, 500, 0, OptionalLong.empty());
 
     return new SimulationConfigContext(general, termination, traffic, dynamics, observability);
   }
@@ -474,7 +474,7 @@ class SimulationIntegrationTest {
 
     NetworkDynamicsConfig dynamics = new NetworkDynamicsConfig.None();
     ObservabilityConfig observability =
-        new ObservabilityConfig(List.of(), List.of(), 1, 0, OptionalLong.empty());
+        new ObservabilityConfig(List.of(), List.of(), 1, 500, 0, OptionalLong.empty());
 
     return new SimulationConfigContext(general, termination, traffic, dynamics, observability);
   }

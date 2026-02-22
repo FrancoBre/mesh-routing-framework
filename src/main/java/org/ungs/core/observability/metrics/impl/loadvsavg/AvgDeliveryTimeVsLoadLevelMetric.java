@@ -17,9 +17,9 @@ public final class AvgDeliveryTimeVsLoadLevelMetric
 
   private final long warmupTicks;
   private final int sampleEvery;
+  private final int windowSize; // 0 = disabled (cumulative average)
 
   private final ArrayDeque<Double> lastDelays = new ArrayDeque<>();
-  private final int windowSize = 500;
 
   private final List<Tuple3<Double, Double, LoadLevelUpdatedEvent.LoadLevelTrend>> series =
       new ArrayList<>();
@@ -27,10 +27,13 @@ public final class AvgDeliveryTimeVsLoadLevelMetric
   private double lastLoadLevel = Double.NaN;
   private LoadLevelUpdatedEvent.LoadLevelTrend lastTrend = null;
 
-  public AvgDeliveryTimeVsLoadLevelMetric(long warmupTicks, int sampleEvery) {
+  public AvgDeliveryTimeVsLoadLevelMetric(long warmupTicks, int sampleEvery, int windowSize) {
     this.warmupTicks = Math.max(0, warmupTicks);
     if (sampleEvery <= 0) throw new IllegalArgumentException("sampleEvery must be > 0");
+    if (windowSize < 0)
+      throw new IllegalArgumentException("windowSize must be >= 0 (0 = disabled)");
     this.sampleEvery = sampleEvery;
+    this.windowSize = windowSize;
   }
 
   @Override
@@ -58,7 +61,11 @@ public final class AvgDeliveryTimeVsLoadLevelMetric
 
       double delay = pd.packet().getArrivalTime() - pd.packet().getDepartureTime();
       lastDelays.addLast(delay);
-      while (lastDelays.size() > windowSize) lastDelays.removeFirst();
+
+      // Apply sliding window limit only if windowSize > 0
+      if (windowSize > 0) {
+        while (lastDelays.size() > windowSize) lastDelays.removeFirst();
+      }
 
       if (t % sampleEvery != 0) return;
 
