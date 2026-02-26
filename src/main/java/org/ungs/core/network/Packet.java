@@ -30,6 +30,10 @@ public class Packet {
     this.timeInQueue += 1;
   }
 
+  public void resetTimeInQueue() {
+    this.timeInQueue = 0.0;
+  }
+
   public void markAsDeparted(SimulationRuntimeContext ctx) {
     if (departureTime < 0) departureTime = ctx.getTick();
     ctx.getEventSink()

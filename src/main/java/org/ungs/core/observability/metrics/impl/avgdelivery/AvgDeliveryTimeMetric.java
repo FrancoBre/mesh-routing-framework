@@ -35,10 +35,13 @@ public final class AvgDeliveryTimeMetric
   public void onEvent(SimulationEvent e, SimulationRuntimeContext ctx) {
     if (e instanceof PacketDeliveredEvent h) {
       h.packet().markAsArrived(ctx);
-      deliveredPackets.add(h.packet());
 
       double t = ctx.getTick();
+      // Only accumulate packets delivered AFTER warmup
       if (t < warmupTicks) return;
+
+      deliveredPackets.add(h.packet());
+
       if (t % sampleEvery != 0) return;
 
       double avg =

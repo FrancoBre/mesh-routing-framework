@@ -5,5 +5,6 @@ public enum OutputType {
   GIF_ROUTE,
   ROUTE_FRAMES,
   CONFIG_DUMP,
-  Q_TABLE_HEATMAP
+  Q_TABLE_HEATMAP,
+  POLICY_SUMMARY
 }

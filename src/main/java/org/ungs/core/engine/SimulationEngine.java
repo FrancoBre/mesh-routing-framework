@@ -83,8 +83,13 @@ public final class SimulationEngine {
   }
 
   private void tick(SimulationRuntimeContext ctx) {
+    // Phase 1: snapshot Q-tables so all nodes see start-of-tick values
     for (Node node : network.getNodes()) {
+      node.getApplication().onTickStart(ctx);
+    }
 
+    // Phase 2: process packets (neighbor queries read from snapshots)
+    for (Node node : network.getNodes()) {
       node.getApplication().onTick(ctx);
     }
 

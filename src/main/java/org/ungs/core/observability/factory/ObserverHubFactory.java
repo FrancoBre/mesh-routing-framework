@@ -20,12 +20,14 @@ import org.ungs.core.observability.metrics.api.MetricPreset;
 import org.ungs.core.observability.metrics.api.MetricType;
 import org.ungs.core.observability.metrics.hub.GenericMetricHubObserver;
 import org.ungs.core.observability.metrics.impl.avgdelivery.AvgDeliveryTimePreset;
+import org.ungs.core.observability.metrics.impl.windoweddelivery.WindowedDeliveryTimePreset;
 import org.ungs.core.observability.output.api.OutputBundle;
 import org.ungs.core.observability.output.api.OutputPreset;
 import org.ungs.core.observability.output.api.OutputType;
 import org.ungs.core.observability.output.impl.ConfigDumpOutputPreset;
 import org.ungs.core.observability.output.impl.GifRouteOutputPreset;
 import org.ungs.core.observability.output.impl.HeatmapOutputPreset;
+import org.ungs.core.observability.output.impl.PolicySummaryOutputPreset;
 import org.ungs.core.observability.output.impl.QTableHeatmapOutputPreset;
 import org.ungs.core.observability.output.impl.RouteFramesOutputPreset;
 import org.ungs.core.observability.route.RouteRecorderObserver;
@@ -41,12 +43,14 @@ public final class ObserverHubFactory {
 
   static {
     registerMetric(new AvgDeliveryTimePreset());
+    registerMetric(new WindowedDeliveryTimePreset());
 
     registerOutput(new HeatmapOutputPreset());
     registerOutput(new GifRouteOutputPreset());
     registerOutput(new RouteFramesOutputPreset());
     registerOutput(new ConfigDumpOutputPreset());
     registerOutput(new QTableHeatmapOutputPreset());
+    registerOutput(new PolicySummaryOutputPreset());
   }
 
   private static void registerOutput(OutputPreset preset) {
