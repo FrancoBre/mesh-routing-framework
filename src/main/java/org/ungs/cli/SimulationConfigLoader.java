@@ -268,7 +268,7 @@ public interface SimulationConfigLoader extends Config, Accessible {
   int nodeFailuresMeanDowntimeTicks();
 
   @Key("network-dynamics.node-failures.random.mean-uptime-ticks")
-  @DefaultValue("0")
+  @DefaultValue("2000")
   int nodeFailuresMeanUptimeTicks();
 
   // -----------------------
