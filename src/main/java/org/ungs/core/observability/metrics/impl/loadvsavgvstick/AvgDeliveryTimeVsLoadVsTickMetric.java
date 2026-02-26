@@ -16,7 +16,7 @@ public final class AvgDeliveryTimeVsLoadVsTickMetric
 
   private final long warmupTicks;
   private final int sampleEvery;
-  private final int windowSize;
+  private final int windowSize; // 0 = disabled (cumulative average)
 
   private final ArrayDeque<Double> lastDelays = new ArrayDeque<>();
   private double lastLoadLevel = Double.NaN;
@@ -27,7 +27,8 @@ public final class AvgDeliveryTimeVsLoadVsTickMetric
   public AvgDeliveryTimeVsLoadVsTickMetric(long warmupTicks, int sampleEvery, int windowSize) {
     this.warmupTicks = Math.max(0, warmupTicks);
     if (sampleEvery <= 0) throw new IllegalArgumentException("sampleEvery must be > 0");
-    if (windowSize <= 0) throw new IllegalArgumentException("windowSize must be > 0");
+    if (windowSize < 0)
+      throw new IllegalArgumentException("windowSize must be >= 0 (0 = disabled)");
     this.sampleEvery = sampleEvery;
     this.windowSize = windowSize;
   }
@@ -55,7 +56,11 @@ public final class AvgDeliveryTimeVsLoadVsTickMetric
 
       double delay = pd.packet().getArrivalTime() - pd.packet().getDepartureTime();
       lastDelays.addLast(delay);
-      while (lastDelays.size() > windowSize) lastDelays.removeFirst();
+
+      // Apply sliding window limit only if windowSize > 0
+      if (windowSize > 0) {
+        while (lastDelays.size() > windowSize) lastDelays.removeFirst();
+      }
 
       if (t % sampleEvery != 0) return;
       if (Double.isNaN(lastLoadLevel)) return;

@@ -18,6 +18,7 @@ public record ObservabilityConfig(
     List<MetricType> metrics,
     List<OutputType> outputs,
     int outputSampleEveryTicks,
+    int metricWindowSize,
     long heatmapFromTick,
     OptionalLong heatmapToTick) {
 
@@ -44,6 +45,11 @@ public record ObservabilityConfig(
     if (sampleEvery <= 0)
       throw new IllegalArgumentException("output.sample-every-ticks must be > 0");
 
+    int metricWindowSize = l.metricWindowSize();
+    if (metricWindowSize < 0)
+      throw new IllegalArgumentException(
+          "metric.window-size must be >= 0 (0 = disabled/cumulative)");
+
     if (outputs.contains(GIF_ROUTE) && !outputs.contains(ROUTE_FRAMES))
       throw new IllegalArgumentException(
           "GIF_ROUTE output requires ROUTE_FRAMES output to be enabled");
@@ -59,7 +65,8 @@ public record ObservabilityConfig(
           "output.heatmap.to-tick must be > output.heatmap.from-tick when set");
     }
 
-    return new ObservabilityConfig(metrics, outputs, sampleEvery, heatmapFromTick, heatmapToTick);
+    return new ObservabilityConfig(
+        metrics, outputs, sampleEvery, metricWindowSize, heatmapFromTick, heatmapToTick);
   }
 
   private static OptionalLong parseOptionalLong(String s) {

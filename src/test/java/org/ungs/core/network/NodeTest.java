@@ -8,8 +8,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.ungs.core.engine.SimulationRuntimeContext;
+import org.ungs.core.routing.api.AlgorithmType;
 import org.ungs.core.routing.api.RoutingApplication;
 import org.ungs.core.routing.impl.qrouting.QRoutingApplication;
+import org.ungs.testutil.MockEventSink;
+import org.ungs.testutil.TestConfigBuilder;
 import org.ungs.testutil.TestNetworkBuilder;
 
 @DisplayName("Node")
@@ -17,12 +21,15 @@ class NodeTest {
 
   private Network network;
   private Node node;
+  private SimulationRuntimeContext ctx;
 
   @BeforeEach
   void setUp() {
     network = new Network();
     node = new Node(new Node.Id(1), new ArrayList<>(), network);
     network.addNode(node);
+    ctx = new SimulationRuntimeContext(TestConfigBuilder.minimal(), network, new MockEventSink());
+    ctx.reset(AlgorithmType.Q_ROUTING);
   }
 
   @Nested
@@ -103,7 +110,7 @@ class NodeTest {
     @Test
     @DisplayName("should install routing application")
     void installApplication_setsApplication() {
-      RoutingApplication app = new QRoutingApplication(node);
+      RoutingApplication app = new QRoutingApplication(node, ctx);
       node.installApplication(app);
 
       assertSame(app, node.getApplication());
@@ -112,8 +119,8 @@ class NodeTest {
     @Test
     @DisplayName("should replace existing application")
     void installApplication_replacesExisting() {
-      RoutingApplication app1 = new QRoutingApplication(node);
-      RoutingApplication app2 = new QRoutingApplication(node);
+      RoutingApplication app1 = new QRoutingApplication(node, ctx);
+      RoutingApplication app2 = new QRoutingApplication(node, ctx);
 
       node.installApplication(app1);
       node.installApplication(app2);

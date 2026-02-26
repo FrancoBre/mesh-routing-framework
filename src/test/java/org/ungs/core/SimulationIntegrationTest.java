@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
+import java.util.OptionalLong;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -41,7 +42,7 @@ class SimulationIntegrationTest {
 
       // Install routing apps
       for (Node node : network.getNodes()) {
-        node.installApplication(new QRoutingApplication(node));
+        node.installApplication(new QRoutingApplication(node, ctx));
       }
 
       // Inject a packet from 0 to 2
@@ -149,7 +150,7 @@ class SimulationIntegrationTest {
 
       for (Node node : network.getNodes()) {
         if (algorithm == AlgorithmType.Q_ROUTING) {
-          node.installApplication(new QRoutingApplication(node));
+          node.installApplication(new QRoutingApplication(node, ctx));
         } else {
           node.installApplication(new ShortestPathApplication(node));
         }
@@ -212,7 +213,7 @@ class SimulationIntegrationTest {
       network.setRuntimeContext(ctx);
 
       for (Node node : network.getNodes()) {
-        node.installApplication(new QRoutingApplication(node));
+        node.installApplication(new QRoutingApplication(node, ctx));
       }
 
       for (int tick = 0; tick < 30; tick++) {
@@ -261,7 +262,7 @@ class SimulationIntegrationTest {
       network.setRuntimeContext(ctx);
 
       for (Node node : network.getNodes()) {
-        node.installApplication(new QRoutingApplication(node));
+        node.installApplication(new QRoutingApplication(node, ctx));
       }
 
       int injectedCount = 0;
@@ -369,7 +370,7 @@ class SimulationIntegrationTest {
       network.setRuntimeContext(ctx);
 
       for (Node node : network.getNodes()) {
-        node.installApplication(new QRoutingApplication(node));
+        node.installApplication(new QRoutingApplication(node, ctx));
       }
 
       // Try to inject many packets
@@ -394,7 +395,7 @@ class SimulationIntegrationTest {
       network.setRuntimeContext(ctx);
 
       for (Node node : network.getNodes()) {
-        node.installApplication(new QRoutingApplication(node));
+        node.installApplication(new QRoutingApplication(node, ctx));
       }
 
       // Inject packet - it cannot be delivered
@@ -444,7 +445,8 @@ class SimulationIntegrationTest {
         new TrafficConfig(schedule, pairSelection, constraints, new GroupsConfig(Map.of()));
 
     NetworkDynamicsConfig dynamics = new NetworkDynamicsConfig.None();
-    ObservabilityConfig observability = new ObservabilityConfig(List.of(), List.of(), 1);
+    ObservabilityConfig observability =
+        new ObservabilityConfig(List.of(), List.of(), 1, 500, 0, OptionalLong.empty());
 
     return new SimulationConfigContext(general, termination, traffic, dynamics, observability);
   }
@@ -471,7 +473,8 @@ class SimulationIntegrationTest {
         new TrafficConfig(schedule, pairSelection, constraints, new GroupsConfig(Map.of()));
 
     NetworkDynamicsConfig dynamics = new NetworkDynamicsConfig.None();
-    ObservabilityConfig observability = new ObservabilityConfig(List.of(), List.of(), 1);
+    ObservabilityConfig observability =
+        new ObservabilityConfig(List.of(), List.of(), 1, 500, 0, OptionalLong.empty());
 
     return new SimulationConfigContext(general, termination, traffic, dynamics, observability);
   }

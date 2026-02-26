@@ -3,6 +3,7 @@ package org.ungs.testutil;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
+import java.util.OptionalLong;
 import lombok.experimental.UtilityClass;
 import org.ungs.core.config.*;
 import org.ungs.core.routing.api.AlgorithmType;
@@ -42,7 +43,8 @@ public final class TestConfigBuilder {
 
     NetworkDynamicsConfig dynamics = new NetworkDynamicsConfig.None();
 
-    ObservabilityConfig observability = new ObservabilityConfig(List.of(), List.of(), 1);
+    ObservabilityConfig observability =
+        new ObservabilityConfig(List.of(), List.of(), 1, 500, 0, OptionalLong.empty());
 
     return new SimulationConfigContext(general, termination, traffic, dynamics, observability);
   }
@@ -65,7 +67,8 @@ public final class TestConfigBuilder {
 
     NetworkDynamicsConfig dynamics = new NetworkDynamicsConfig.None();
 
-    ObservabilityConfig observability = new ObservabilityConfig(List.of(), List.of(), 1);
+    ObservabilityConfig observability =
+        new ObservabilityConfig(List.of(), List.of(), 1, 500, 0, OptionalLong.empty());
 
     return new SimulationConfigContext(general, termination, traffic, dynamics, observability);
   }

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -268,7 +269,8 @@ class PairSelectorPresetsTest {
           new TrafficConfig(schedule, pairSelection, constraints, new GroupsConfig(groups));
 
       NetworkDynamicsConfig dynamics = new NetworkDynamicsConfig.None();
-      ObservabilityConfig observability = new ObservabilityConfig(List.of(), List.of(), 1);
+      ObservabilityConfig observability =
+          new ObservabilityConfig(List.of(), List.of(), 1, 500, 0, OptionalLong.empty());
 
       return new SimulationConfigContext(general, termination, traffic, dynamics, observability);
     }

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
+import java.util.OptionalLong;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -264,7 +265,8 @@ class SimulationEngineIntegrationTest {
         new TrafficConfig(schedule, pairSelection, constraints, new GroupsConfig(Map.of()));
 
     NetworkDynamicsConfig dynamics = new NetworkDynamicsConfig.None();
-    ObservabilityConfig observability = new ObservabilityConfig(List.of(), List.of(), 1);
+    ObservabilityConfig observability =
+        new ObservabilityConfig(List.of(), List.of(), 1, 500, 0, OptionalLong.empty());
 
     return new SimulationConfigContext(general, termination, traffic, dynamics, observability);
   }
@@ -284,7 +286,8 @@ class SimulationEngineIntegrationTest {
         new TrafficConfig(schedule, pairSelection, constraints, new GroupsConfig(Map.of()));
 
     NetworkDynamicsConfig dynamics = new NetworkDynamicsConfig.None();
-    ObservabilityConfig observability = new ObservabilityConfig(List.of(), List.of(), 1);
+    ObservabilityConfig observability =
+        new ObservabilityConfig(List.of(), List.of(), 1, 500, 0, OptionalLong.empty());
 
     return new SimulationConfigContext(general, termination, traffic, dynamics, observability);
   }

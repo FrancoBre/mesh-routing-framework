@@ -24,8 +24,9 @@ public final class AvgDeliveryTimeVsLoadLevelPreset
 
     long warmup = Optional.of(simCfg.general().warmupTicks()).orElse(0);
     int sampleEvery = Optional.of(simCfg.observability().outputSampleEveryTicks()).orElse(1);
+    int windowSize = simCfg.observability().metricWindowSize();
 
-    var metric = new AvgDeliveryTimeVsLoadLevelMetric(warmup, sampleEvery);
+    var metric = new AvgDeliveryTimeVsLoadLevelMetric(warmup, sampleEvery, windowSize);
 
     var perAlgoRenderer = new AvgDeliveryTimeVsLoadLevelRenderer();
     var comparisonRenderer = new AvgDeliveryTimeVsLoadLevelComparisonRenderer();

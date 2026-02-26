@@ -21,12 +21,20 @@ public class QRoutingApplication extends RoutingApplication {
   private static final double ETA = 0.7; // learning rate
   private static final double EPSILON_EQ_TOL = 1e-6; // for comparing doubles (not exploration)
   private static final double STEP_TIME = 1.0;
+  private static final double INITIAL_Q = 2000.0;
 
   @Getter private final QTable qTable;
 
-  public QRoutingApplication(Node node) {
+  public QRoutingApplication(Node node, SimulationRuntimeContext ctx) {
     super(node);
     this.qTable = new QTable();
+
+    for (Node neighbor : node.getNeighbors()) {
+      for (Node dest : ctx.getNetwork().getNodes()) {
+        if (dest.getId().equals(node.getId())) continue;
+        qTable.set(node.getId(), neighbor.getId(), dest.getId(), INITIAL_Q);
+      }
+    }
   }
 
   public AlgorithmType getType() {
@@ -51,7 +59,7 @@ public class QRoutingApplication extends RoutingApplication {
           packetToProcess.getId());
 
       ctx.getEventSink()
-          .emit(new PacketDeliveredEvent(packetToProcess, 0, ctx.getTick(), this.getType()));
+          .emit(new PacketDeliveredEvent(packetToProcess, ctx.getTick(), this.getType()));
       return;
     }
 
@@ -154,7 +162,7 @@ public class QRoutingApplication extends RoutingApplication {
     ctx.schedule(this.getNodeId(), bestNextNode.getId(), packetToProcess);
   }
 
-  public static class QTable {
+    public static class QTable {
 
     @Getter private final Set<QValue> qValues;
 
@@ -171,7 +179,7 @@ public class QRoutingApplication extends RoutingApplication {
                       && q.getDestination().equals(destination))
           .map(QValue::getValue)
           .findFirst()
-          .orElse(0.0);
+          .orElse(INITIAL_Q);
     }
 
     public void set(Node.Id from, Node.Id to, Node.Id destination, double value) {
