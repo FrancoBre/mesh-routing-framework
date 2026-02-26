@@ -47,8 +47,7 @@ class QRoutingApplicationTest {
   class QTableInitialization {
 
     @Test
-    @DisplayName(
-        "should initialize Q-values to INITIAL_Q (2000.0) for all neighbor-destination pairs")
+    @DisplayName("should initialize Q-values to INITIAL_Q (0.0) for all neighbor-destination pairs")
     void qTable_initializesToInitialQ() {
       Node node = network.getNode(new Node.Id(0));
       QRoutingApplication app = (QRoutingApplication) node.getApplication();
@@ -56,9 +55,9 @@ class QRoutingApplicationTest {
       // Q-table should be initialized with entries for all neighbor-destination pairs
       assertFalse(app.getQTable().getQValues().isEmpty());
 
-      // All initial Q-values should be 2000.0 (INITIAL_Q constant)
+      // All initial Q-values should be 0.0 (INITIAL_Q constant)
       for (var qValue : app.getQTable().getQValues()) {
-        assertEquals(2000.0, qValue.getValue(), 0.01);
+        assertEquals(0.0, qValue.getValue(), 0.01);
       }
     }
   }

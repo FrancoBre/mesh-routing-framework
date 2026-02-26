@@ -2,8 +2,10 @@ package org.ungs.core.routing.impl.fullecho;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,7 +23,7 @@ public class FullEchoQRoutingApplication extends RoutingApplication {
   private static final double ETA = 0.7; // learning rate
   private static final double EPSILON_EQ_TOL = 1e-6; // tie tolerance
   private static final double STEP_TIME = 1.0;
-  private static final double INITIAL_Q = 2000.0;
+  private static final double INITIAL_Q = 0.0;
 
   @Getter private final QTable qTable;
 
@@ -29,12 +31,18 @@ public class FullEchoQRoutingApplication extends RoutingApplication {
     super(node);
     this.qTable = new QTable();
 
+    // Initialize all Q-values to a large constant (same as Q-routing).
     for (Node neighbor : node.getNeighbors()) {
       for (Node dest : ctx.getNetwork().getNodes()) {
         if (dest.getId().equals(node.getId())) continue;
         qTable.set(node.getId(), neighbor.getId(), dest.getId(), INITIAL_Q);
       }
     }
+  }
+
+  @Override
+  public void onTickStart(SimulationRuntimeContext ctx) {
+    qTable.takeSnapshot();
   }
 
   @Override
@@ -53,10 +61,12 @@ public class FullEchoQRoutingApplication extends RoutingApplication {
     // delivered
     if (this.getNodeId().equals(destination)) {
       log.info(
-          "[nodeId={}, time={}]: Packet {} has reached its destination",
+          "[nodeId={}, time={}]: Packet {} has reached its destination (departed={}, transit={})",
           this.getNodeId(),
           ctx.getTick(),
-          packet.getId());
+          packet.getId(),
+          packet.getDepartureTime(),
+          ctx.getTick() - packet.getDepartureTime());
 
       ctx.getEventSink().emit(new PacketDeliveredEvent(packet, ctx.getTick(), this.getType()));
       return;
@@ -127,6 +137,12 @@ public class FullEchoQRoutingApplication extends RoutingApplication {
   }
 
   private double estimateFromNeighbor(Node neighbor, Node.Id destination) {
+    // Paper: "A packet sent directly to its destination node is removed
+    // from the network immediately." → estimate = 0 when neighbor IS the destination.
+    if (neighbor.getId().equals(destination)) {
+      return 0.0;
+    }
+
     var app = (FullEchoQRoutingApplication) neighbor.getApplication();
 
     var neighborNeighbors = neighbor.getNeighbors();
@@ -134,7 +150,7 @@ public class FullEchoQRoutingApplication extends RoutingApplication {
 
     double min = Double.MAX_VALUE;
     for (Node z : neighborNeighbors) {
-      double q = app.getQTable().get(neighbor.getId(), z.getId(), destination);
+      double q = app.getQTable().getFromSnapshot(neighbor.getId(), z.getId(), destination);
       if (q < min) min = q;
     }
 
@@ -171,6 +187,26 @@ public class FullEchoQRoutingApplication extends RoutingApplication {
           .findFirst()
           .ifPresentOrElse(
               q -> q.setValue(value), () -> qValues.add(new QValue(from, to, destination, value)));
+    }
+
+    // ── snapshot support (for tick-parallel simulation) ──────────────────
+
+    private final Map<String, Double> snapshot = new HashMap<>();
+
+    private static String snapshotKey(Node.Id from, Node.Id to, Node.Id dest) {
+      return from.value() + ":" + to.value() + ":" + dest.value();
+    }
+
+    public void takeSnapshot() {
+      snapshot.clear();
+      for (QValue qv : qValues) {
+        snapshot.put(snapshotKey(qv.getFrom(), qv.getTo(), qv.getDestination()), qv.getValue());
+      }
+    }
+
+    /** Read from the start-of-tick snapshot (used by neighbor queries). */
+    public double getFromSnapshot(Node.Id from, Node.Id to, Node.Id destination) {
+      return snapshot.getOrDefault(snapshotKey(from, to, destination), INITIAL_Q);
     }
 
     @Override

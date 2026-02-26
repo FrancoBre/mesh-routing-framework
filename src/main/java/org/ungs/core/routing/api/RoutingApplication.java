@@ -13,6 +13,14 @@ public abstract class RoutingApplication {
 
   private final Node node;
 
+  /**
+   * Called once per tick BEFORE any node processes packets. Q-learning algorithms override this to
+   * snapshot their Q-tables, ensuring all nodes see start-of-tick values when querying neighbors.
+   */
+  public void onTickStart(SimulationRuntimeContext ctx) {
+    // default no-op
+  }
+
   public abstract void onTick(SimulationRuntimeContext ctx);
 
   public Node.Id getNodeId() {

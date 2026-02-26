@@ -2,8 +2,10 @@ package org.ungs.core.routing.impl.qrouting;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,7 +23,7 @@ public class QRoutingApplication extends RoutingApplication {
   private static final double ETA = 0.7; // learning rate
   private static final double EPSILON_EQ_TOL = 1e-6; // for comparing doubles (not exploration)
   private static final double STEP_TIME = 1.0;
-  private static final double INITIAL_Q = 2000.0;
+  private static final double INITIAL_Q = 0.0;
 
   @Getter private final QTable qTable;
 
@@ -35,6 +37,11 @@ public class QRoutingApplication extends RoutingApplication {
         qTable.set(node.getId(), neighbor.getId(), dest.getId(), INITIAL_Q);
       }
     }
+  }
+
+  @Override
+  public void onTickStart(SimulationRuntimeContext ctx) {
+    qTable.takeSnapshot();
   }
 
   public AlgorithmType getType() {
@@ -53,10 +60,12 @@ public class QRoutingApplication extends RoutingApplication {
 
     if (this.getNodeId().equals(packetToProcess.getDestination())) {
       log.info(
-          "[nodeId={}, time={}]: Packet {} has reached its destination",
+          "[nodeId={}, time={}]: Packet {} has reached its destination (departed={}, transit={})",
           this.getNodeId(),
           ctx.getTick(),
-          packetToProcess.getId());
+          packetToProcess.getId(),
+          packetToProcess.getDepartureTime(),
+          ctx.getTick() - packetToProcess.getDepartureTime());
 
       ctx.getEventSink()
           .emit(new PacketDeliveredEvent(packetToProcess, ctx.getTick(), this.getType()));
@@ -135,7 +144,8 @@ public class QRoutingApplication extends RoutingApplication {
       double qVal =
           nextNodeApp
               .getQTable()
-              .get(nextNode.getId(), neighborOfNext.getId(), packetToProcess.getDestination());
+              .getFromSnapshot(
+                  nextNode.getId(), neighborOfNext.getId(), packetToProcess.getDestination());
       if (qVal < minNextQ) {
         minNextQ = qVal;
       }
@@ -162,7 +172,7 @@ public class QRoutingApplication extends RoutingApplication {
     ctx.schedule(this.getNodeId(), bestNextNode.getId(), packetToProcess);
   }
 
-    public static class QTable {
+  public static class QTable {
 
     @Getter private final Set<QValue> qValues;
 
@@ -192,6 +202,26 @@ public class QRoutingApplication extends RoutingApplication {
           .findFirst()
           .ifPresentOrElse(
               q -> q.setValue(value), () -> qValues.add(new QValue(from, to, destination, value)));
+    }
+
+    // ── snapshot support (for tick-parallel simulation) ──────────────────
+
+    private final Map<String, Double> snapshot = new HashMap<>();
+
+    private static String snapshotKey(Node.Id from, Node.Id to, Node.Id dest) {
+      return from.value() + ":" + to.value() + ":" + dest.value();
+    }
+
+    public void takeSnapshot() {
+      snapshot.clear();
+      for (QValue qv : qValues) {
+        snapshot.put(snapshotKey(qv.getFrom(), qv.getTo(), qv.getDestination()), qv.getValue());
+      }
+    }
+
+    /** Read from the start-of-tick snapshot (used by neighbor queries). */
+    public double getFromSnapshot(Node.Id from, Node.Id to, Node.Id destination) {
+      return snapshot.getOrDefault(snapshotKey(from, to, destination), INITIAL_Q);
     }
 
     @Override

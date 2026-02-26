@@ -42,10 +42,12 @@ public class ShortestPathApplication extends RoutingApplication implements Topol
 
     if (this.getNodeId().equals(packetToProcess.getDestination())) {
       log.info(
-          "[nodeId={}, time={}]: Packet {} has reached its destination",
+          "[nodeId={}, time={}]: Packet {} has reached its destination (departed={}, transit={})",
           this.getNodeId(),
           ctx.getTick(),
-          packetToProcess.getId());
+          packetToProcess.getId(),
+          packetToProcess.getDepartureTime(),
+          ctx.getTick() - packetToProcess.getDepartureTime());
 
       ctx.getEventSink()
           .emit(new PacketDeliveredEvent(packetToProcess, ctx.getTick(), this.getType()));

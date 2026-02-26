@@ -84,7 +84,10 @@ public final class SimulationEngine {
 
   private void tick(SimulationRuntimeContext ctx) {
     for (Node node : network.getNodes()) {
+      node.getApplication().onTickStart(ctx);
+    }
 
+    for (Node node : network.getNodes()) {
       node.getApplication().onTick(ctx);
     }
 
