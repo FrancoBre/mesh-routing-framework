@@ -1,0 +1,44 @@
+{
+  "general" : {
+    "seed" : 42,
+    "topology" : "_6X6_GRID",
+    "topology_file" : "",
+    "algorithms" : [ "SHORTEST_PATH", "Q_ROUTING" ],
+    "max_active_packets" : 1000,
+    "warmup_ticks" : 6000,
+    "experiment_name" : "oscillating-patterns-top-to-bottom",
+    "output_folder" : null
+  },
+  "termination" : {
+    "total_ticks" : 20000
+  },
+  "traffic" : {
+    "injection_schedule" : {
+      "l" : 0.5
+    },
+    "pair_selection" : {
+      "group_a" : "TOP",
+      "group_b" : "BOTTOM",
+      "period_ticks" : 200
+    },
+    "constraints" : {
+      "disallow_self" : true,
+      "disallow_neighbor" : true
+    },
+    "groups" : {
+      "groups" : {
+        "TOP" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 ],
+        "BOTTOM" : [ 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35 ],
+        "LEFT" : [ 0, 1, 2, 6, 7, 8, 12, 13, 14, 18, 19, 20, 24, 25, 26, 30, 31, 32 ],
+        "RIGHT" : [ 3, 4, 5, 9, 10, 11, 15, 16, 17, 21, 22, 23, 27, 28, 29, 33, 34, 35 ]
+      },
+      "empty" : false
+    }
+  },
+  "dynamics" : { },
+  "observability" : {
+    "metrics" : [ "AVG_DELIVERY_TIME" ],
+    "outputs" : [ "HEAT_MAP", "CONFIG_DUMP" ],
+    "output_sample_every_ticks" : 10
+  }
+}

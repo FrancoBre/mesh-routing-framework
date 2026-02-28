@@ -1,0 +1,41 @@
+{
+  "general" : {
+    "seed" : 42,
+    "topology" : "_6X6_GRID",
+    "topology_file" : "",
+    "algorithms" : [ "SHORTEST_PATH", "Q_ROUTING", "FULL_ECHO_Q_ROUTING" ],
+    "max_active_packets" : 1000,
+    "warmup_ticks" : 6000,
+    "experiment_name" : "",
+    "output_folder" : null
+  },
+  "termination" : {
+    "total_ticks" : 30000
+  },
+  "traffic" : {
+    "injection_schedule" : {
+      "l" : 0.5
+    },
+    "pair_selection" : { },
+    "constraints" : {
+      "disallow_self" : true,
+      "disallow_neighbor" : true
+    },
+    "groups" : {
+      "groups" : {
+        "TOP" : [ 0, 1, 2, 3, 4, 5 ],
+        "BOTTOM" : [ 30, 31, 32, 33, 34, 35 ]
+      },
+      "empty" : false
+    }
+  },
+  "dynamics" : { },
+  "observability" : {
+    "metrics" : [ "AVG_DELIVERY_TIME", "WINDOWED_DELIVERY_TIME" ],
+    "outputs" : [ "HEAT_MAP", "CONFIG_DUMP", "Q_TABLE_HEATMAP" ],
+    "output_sample_every_ticks" : 10,
+    "metric_window_size" : 500,
+    "heatmap_from_tick" : 0,
+    "heatmap_to_tick" : null
+  }
+}
