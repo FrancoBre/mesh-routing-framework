@@ -53,7 +53,7 @@ public final class WindowedDeliveryTimeRenderer
 
       if (data == null || data.isEmpty()) return;
 
-      double[] x = data.stream().mapToDouble(p -> p.getFirst().doubleValue()).toArray();
+      double[] x = data.stream().mapToDouble(Tuple::getFirst).toArray();
       double[] y = data.stream().mapToDouble(Tuple::getSecond).toArray();
 
       XYSeries series = chart.addSeries(algo.name(), x, y);

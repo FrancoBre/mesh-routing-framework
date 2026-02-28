@@ -88,7 +88,7 @@ public final class WindowedDeliveryTimeComparisonRenderer
         var points = entry.getValue();
         if (points == null || points.isEmpty()) continue;
 
-        double[] x = points.stream().mapToDouble(p -> p.getFirst().doubleValue()).toArray();
+        double[] x = points.stream().mapToDouble(Tuple::getFirst).toArray();
         double[] y = points.stream().mapToDouble(Tuple::getSecond).toArray();
 
         XYSeries series = chart.addSeries(algo.name(), x, y);
