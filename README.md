@@ -45,7 +45,7 @@ make run
 
 ### Pre-run Experiments
 
-The `results/` folder contains experiments already run under various configurations, implementing the experiments from Boyan & Littman's paper. You can explore these to see example outputs (heatmaps, delivery time charts, comparisons) or use their configurations as templates for your own experiments.
+The [results/](https://github.com/FrancoBre/mesh-routing-framework/tree/main/results) folder contains experiments already run under various configurations, implementing the experiments from Boyan & Littman's paper. You can explore these to see example outputs (heatmaps, delivery time charts, comparisons) or use their configurations as templates for your own experiments.
 
 ## Supported Algorithms
 
